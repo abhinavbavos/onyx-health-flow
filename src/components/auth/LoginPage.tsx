@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Activity, Lock, Phone } from "lucide-react";
 import { UserRole } from "@/types/roles";
 import { useToast } from "@/components/ui/use-toast";
-import { authService } from "@/services/auth.service";
 import { useAuth } from "@/hooks/useAuth";
 
 const LoginPage = () => {
@@ -34,23 +33,12 @@ const LoginPage = () => {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      await authService.requestOtp([phoneCountry, phoneNumber]);
-      setStep('otp');
-      toast({
-        title: "OTP Sent",
-        description: "Please check your phone for the OTP",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send OTP",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Mock OTP request
+    setStep('otp');
+    toast({
+      title: "OTP Sent (Mock)",
+      description: "Use any 6-digit code to login",
+    });
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -65,31 +53,23 @@ const LoginPage = () => {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      await authService.verifyOtp({
-        phone_number: [phoneCountry, phoneNumber],
-        country: "India",
-        otp,
-      });
-
+    // Mock OTP verification - accept any 6-digit code
+    if (otp.length === 6) {
       const email = `${phoneNumber}@onyxhealth.com`;
       login(role, email);
 
       toast({
-        title: "Login Successful",
+        title: "Login Successful (Mock)",
         description: `Welcome to Onyx Health+`,
       });
 
       navigate(`/dashboard/${role}`);
-    } catch (error: any) {
+    } else {
       toast({
-        title: "Error",
-        description: error.message || "Invalid OTP",
+        title: "Invalid OTP",
+        description: "Please enter a 6-digit code",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -104,7 +84,7 @@ const LoginPage = () => {
           </div>
           <CardTitle className="text-3xl font-bold">Onyx Health+</CardTitle>
           <CardDescription>
-            {step === 'phone' ? 'Enter your phone number' : 'Verify OTP'}
+            {step === 'phone' ? 'Enter your phone number' : 'Verify OTP (any 6 digits for demo)'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -157,8 +137,8 @@ const LoginPage = () => {
                 </Select>
               </div>
 
-              <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
-                {isLoading ? 'Sending OTP...' : 'Send OTP'}
+              <Button type="submit" className="w-full gradient-primary">
+                Send OTP
               </Button>
             </form>
           ) : (
@@ -186,12 +166,11 @@ const LoginPage = () => {
                   variant="outline" 
                   className="w-full"
                   onClick={() => setStep('phone')}
-                  disabled={isLoading}
                 >
                   Back
                 </Button>
-                <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
-                  {isLoading ? 'Verifying...' : 'Verify OTP'}
+                <Button type="submit" className="w-full gradient-primary">
+                  Verify OTP
                 </Button>
               </div>
             </form>

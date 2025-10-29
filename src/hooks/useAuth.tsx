@@ -1,7 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '@/services/auth.service';
-import { tokenManager } from '@/lib/api-client';
 import { UserRole } from '@/types/roles';
 import { toast } from '@/hooks/use-toast';
 
@@ -24,12 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in (mock auth using localStorage)
     const role = localStorage.getItem('userRole') as UserRole;
     const email = localStorage.getItem('userEmail');
-    const hasToken = tokenManager.isAuthenticated();
+    const accessToken = localStorage.getItem('accessToken');
 
-    if (role && email && hasToken) {
+    if (role && email && accessToken) {
       setUserRole(role);
       setUserEmail(email);
       setIsAuthenticated(true);
@@ -38,18 +36,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (role: UserRole, email: string) => {
+    // Mock login - store in localStorage
     localStorage.setItem('userRole', role);
     localStorage.setItem('userEmail', email);
+    localStorage.setItem('accessToken', 'mock-token-' + Date.now());
+    localStorage.setItem('refreshToken', 'mock-refresh-token-' + Date.now());
+    
     setUserRole(role);
     setUserEmail(email);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    authService.logout();
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    
     setUserRole(null);
     setUserEmail(null);
     setIsAuthenticated(false);
+    
     toast({
       title: 'Logged out successfully',
     });
