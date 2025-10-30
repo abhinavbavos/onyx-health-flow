@@ -16,15 +16,21 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/components/ui/use-toast";
 
 const Sidebar = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { toast } = useToast();
   const userRole = localStorage.getItem("userRole") || "user";
 
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userEmail");
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out",
+    });
+    navigate("/");
   };
 
   const getNavigationItems = () => {
