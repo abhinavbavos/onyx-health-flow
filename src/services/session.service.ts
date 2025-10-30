@@ -67,4 +67,30 @@ export const sessionService = {
       token: token || undefined,
     });
   },
+
+  async addSessionItemResult(data: any): Promise<{ result: any }> {
+    const token = tokenManager.getAccessToken();
+    return apiRequest<{ result: any }>(API_ENDPOINTS.sessionItems.addResult, {
+      method: 'POST',
+      body: data,
+      token: token || undefined,
+    });
+  },
+
+  async addSessionItemMedia(data: any): Promise<{ media: any }> {
+    const token = tokenManager.getAccessToken();
+    return apiRequest<{ media: any }>(API_ENDPOINTS.sessionItems.addMedia, {
+      method: 'POST',
+      body: data,
+      token: token || undefined,
+    });
+  },
+
+  async getSessionItemMedia(id: string, fileKey: string): Promise<{ media: any }> {
+    const token = tokenManager.getAccessToken();
+    return apiRequest<{ media: any }>(API_ENDPOINTS.sessionItems.getMedia(id, fileKey), {
+      method: 'GET',
+      token: token || undefined,
+    });
+  },
 };

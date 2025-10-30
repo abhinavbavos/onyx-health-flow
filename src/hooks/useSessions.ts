@@ -1,37 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
-
-// Mock data
-const mockSessions = [
-  {
-    _id: '1',
-    userId: 'user1',
-    profileId: '1',
-    deviceId: 'device1',
-    startTime: '2024-01-15T10:00:00Z',
-    endTime: '2024-01-15T10:30:00Z',
-    status: 'completed',
-    measurements: {
-      heartRate: 75,
-      bloodPressure: '120/80',
-      temperature: 36.6,
-    },
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:30:00Z',
-  },
-  {
-    _id: '2',
-    userId: 'user1',
-    profileId: '1',
-    deviceId: 'device2',
-    startTime: '2024-01-16T14:00:00Z',
-    endTime: null,
-    status: 'active',
-    measurements: {},
-    createdAt: '2024-01-16T14:00:00Z',
-    updatedAt: '2024-01-16T14:00:00Z',
-  },
-];
+import { sessionService } from '@/services/session.service';
 
 type SessionStatus = 'Scheduled' | 'InProgress' | 'Completed' | 'Cancelled';
 
@@ -39,9 +8,16 @@ export function useSessions(status?: SessionStatus) {
   return useQuery({
     queryKey: ['sessions', status],
     queryFn: async () => {
-      // Mock API call - return mock data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { sessions: mockSessions };
+      try {
+        return await sessionService.getSessions(status);
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to fetch sessions',
+          variant: 'destructive',
+        });
+        throw error;
+      }
     },
   });
 }
@@ -50,11 +26,16 @@ export function useSession(id: string) {
   return useQuery({
     queryKey: ['session', id],
     queryFn: async () => {
-      // Mock API call - return mock data
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const session = mockSessions.find(s => s._id === id);
-      if (!session) throw new Error('Session not found');
-      return { session };
+      try {
+        return await sessionService.getSession(id);
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to fetch session',
+          variant: 'destructive',
+        });
+        throw error;
+      }
     },
     enabled: !!id,
   });
@@ -65,15 +46,13 @@ export function useCreateSession() {
 
   return useMutation({
     mutationFn: async (data: any) => {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { session: { ...data, _id: Date.now().toString() } };
+      return await sessionService.createSession(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       toast({
         title: 'Success',
-        description: 'Session created successfully (mock)',
+        description: 'Session created successfully',
       });
     },
     onError: (error: any) => {
@@ -91,15 +70,13 @@ export function useUpdateSession() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { session: { ...data, _id: id } };
+      return await sessionService.updateSession(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       toast({
         title: 'Success',
-        description: 'Session updated successfully (mock)',
+        description: 'Session updated successfully',
       });
     },
     onError: (error: any) => {
@@ -117,15 +94,13 @@ export function useDeleteSession() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { message: 'Session deleted successfully' };
+      return await sessionService.deleteSession(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       toast({
         title: 'Success',
-        description: 'Session deleted successfully (mock)',
+        description: 'Session deleted successfully',
       });
     },
     onError: (error: any) => {
