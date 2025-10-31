@@ -7,20 +7,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Activity, Lock, Mail } from "lucide-react";
 import { UserRole } from "@/types/roles";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  userAuthVerify, 
+  verifySuperAdmin, 
+  verifyExecAdmin,
+  verifyClusterHead,
+  verifyUserHead,
+  verifyNurse,
+  verifyTechnician,
+  verifyNonUser
+} from "@/services/auth.service";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [role, setRole] = useState<UserRole>("user");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple validation
-    if (!email || !password) {
+    if (!email || !otp) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -29,17 +39,59 @@ const LoginPage = () => {
       return;
     }
 
-    // Store user info in localStorage for demo
-    localStorage.setItem("userRole", role);
-    localStorage.setItem("userEmail", email);
-    
-    toast({
-      title: "Login Successful",
-      description: `Welcome to Onyx Health+`,
-    });
+    setLoading(true);
 
-    // Navigate to appropriate dashboard
-    navigate(`/dashboard/${role}`);
+    try {
+      let response;
+      
+      // Call appropriate verify endpoint based on role
+      switch (role) {
+        case "super-admin":
+          response = await verifySuperAdmin(email, otp);
+          break;
+        case "executive-admin":
+          response = await verifyExecAdmin(email, otp);
+          break;
+        case "cluster-head":
+          response = await verifyClusterHead(email, otp);
+          break;
+        case "user-head":
+          response = await verifyUserHead(email, otp);
+          break;
+        case "nurse":
+          response = await verifyNurse(email, otp);
+          break;
+        case "technician":
+          response = await verifyTechnician(email, otp);
+          break;
+        case "doctor":
+          response = await verifyNonUser(email, otp);
+          break;
+        case "user":
+        default:
+          response = await userAuthVerify(email, otp);
+          break;
+      }
+
+      // Store user info
+      localStorage.setItem("userRole", response.role || role);
+      localStorage.setItem("userEmail", email);
+      
+      toast({
+        title: "Login Successful",
+        description: `Welcome to Onyx Health+`,
+      });
+
+      navigate(`/dashboard/${response.role || role}`);
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid credentials. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,28 +119,30 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
+                  disabled={loading}
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="otp">OTP</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="otp"
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
                   className="pl-10"
+                  disabled={loading}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="role">Select Role</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
+              <Select value={role} onValueChange={(value) => setRole(value as UserRole)} disabled={loading}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -98,19 +152,20 @@ const LoginPage = () => {
                   <SelectItem value="cluster-head">Cluster Head</SelectItem>
                   <SelectItem value="user-head">User Head</SelectItem>
                   <SelectItem value="nurse">Nurse</SelectItem>
+                  <SelectItem value="technician">Technician</SelectItem>
                   <SelectItem value="user">Patient</SelectItem>
                   <SelectItem value="doctor">Doctor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <Button type="submit" className="w-full gradient-primary">
-              Sign In
+            <Button type="submit" className="w-full gradient-primary" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
               <a href="#" className="hover:text-primary transition-colors">
-                Forgot password?
+                Need an OTP? Contact your administrator
               </a>
             </div>
           </form>

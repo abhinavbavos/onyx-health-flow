@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { logout } from "@/services/auth.service";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -24,13 +25,12 @@ const Sidebar = () => {
   const userRole = localStorage.getItem("userRole") || "user";
 
   const handleLogout = () => {
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userEmail");
+    logout();
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out",
     });
-    navigate("/");
+    navigate("/login");
   };
 
   const getNavigationItems = () => {

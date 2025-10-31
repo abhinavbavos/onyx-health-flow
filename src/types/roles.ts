@@ -4,6 +4,7 @@ export type UserRole =
   | 'cluster-head'
   | 'user-head'
   | 'nurse'
+  | 'technician'
   | 'user'
   | 'doctor';
 
