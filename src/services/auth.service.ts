@@ -13,191 +13,188 @@ export interface VerifyResponse extends AuthResponse {
   role?: UserRole;
 }
 
-// User Authentication
-export const userAuth = async (email: string): Promise<AuthResponse> => {
+// ==========================
+// USER (PHONE-BASED AUTH)
+// ==========================
+
+// Step 1: Send OTP
+export const userAuth = async (phone_number: string[]): Promise<AuthResponse> => {
   return apiRequest(API_ENDPOINTS.AUTH.USER_AUTH, {
     method: 'POST',
-    data: { email },
+    data: { phone_number },
     requiresAuth: false,
   });
 };
 
-export const userAuthVerify = async (email: string, otp: string): Promise<VerifyResponse> => {
+// Step 2: Verify OTP
+export const userAuthVerify = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.USER_AUTH_VERIFY, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// Super Admin
-export const createSuperAdmin = async (data: any): Promise<AuthResponse> => {
-  return apiRequest(API_ENDPOINTS.AUTH.CREATE_SUPER_ADMIN, {
-    method: 'POST',
-    data,
-    requiresAuth: false,
-  });
-};
-
-export const verifySuperAdmin = async (email: string, otp: string): Promise<VerifyResponse> => {
+// ==========================
+// SUPER ADMIN
+// ==========================
+export const verifySuperAdmin = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.VERIFY_SUPER_ADMIN, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// Executive Admin
-export const createExecAdmin = async (data: any): Promise<AuthResponse> => {
-  return apiRequest(API_ENDPOINTS.AUTH.CREATE_EXEC_ADMIN, {
-    method: 'POST',
-    data,
-    requiresAuth: false,
-  });
-};
-
-export const verifyExecAdmin = async (email: string, otp: string): Promise<VerifyResponse> => {
+// ==========================
+// EXECUTIVE ADMIN
+// ==========================
+export const verifyExecAdmin = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.VERIFY_EXEC_ADMIN, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// Cluster Head
-export const createClusterHead = async (data: any): Promise<AuthResponse> => {
-  return apiRequest(API_ENDPOINTS.AUTH.CREATE_CLUSTER_HEAD, {
-    method: 'POST',
-    data,
-    requiresAuth: false,
-  });
-};
-
-export const verifyClusterHead = async (email: string, otp: string): Promise<VerifyResponse> => {
+// ==========================
+// CLUSTER HEAD
+// ==========================
+export const verifyClusterHead = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.VERIFY_CLUSTER_HEAD, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// User Head
-export const createUserHead = async (data: any): Promise<AuthResponse> => {
-  return apiRequest(API_ENDPOINTS.AUTH.CREATE_USER_HEAD, {
-    method: 'POST',
-    data,
-    requiresAuth: false,
-  });
-};
-
-export const verifyUserHead = async (email: string, otp: string): Promise<VerifyResponse> => {
+// ==========================
+// USER HEAD
+// ==========================
+export const verifyUserHead = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.VERIFY_USER_HEAD, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// Nurse
-export const createNurse = async (data: any): Promise<AuthResponse> => {
-  return apiRequest(API_ENDPOINTS.AUTH.CREATE_NURSE, {
-    method: 'POST',
-    data,
-    requiresAuth: false,
-  });
-};
-
-export const verifyNurse = async (email: string, otp: string): Promise<VerifyResponse> => {
+// ==========================
+// NURSE
+// ==========================
+export const verifyNurse = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.VERIFY_NURSE, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// Technician
-export const createTechnician = async (data: any): Promise<AuthResponse> => {
-  return apiRequest(API_ENDPOINTS.AUTH.CREATE_TECHNICIAN, {
-    method: 'POST',
-    data,
-    requiresAuth: false,
-  });
-};
-
-export const verifyTechnician = async (email: string, otp: string): Promise<VerifyResponse> => {
+// ==========================
+// TECHNICIAN
+// ==========================
+export const verifyTechnician = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.VERIFY_TECHNICIAN, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// Non-User
-export const signinNonUser = async (data: any): Promise<AuthResponse> => {
-  return apiRequest(API_ENDPOINTS.AUTH.SIGNIN_NON_USER, {
-    method: 'POST',
-    data,
-    requiresAuth: false,
-  });
-};
-
-export const verifyNonUser = async (email: string, otp: string): Promise<VerifyResponse> => {
+// ==========================
+// DOCTOR / NON-USER
+// ==========================
+export const verifyNonUser = async (
+  phone_number: string[],
+  country: string,
+  otp: string
+): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(API_ENDPOINTS.AUTH.VERIFY_NON_USER, {
     method: 'POST',
-    data: { email, otp },
+    data: { phone_number, country, otp },
     requiresAuth: false,
   });
-  
+
   if (response.token || response.accessToken) {
     setAuthToken(response.token || response.accessToken!);
   }
-  
+
   return response;
 };
 
-// Reissue Token
+// ==========================
+// TOKEN / LOGOUT
+// ==========================
 export const issueToken = async (): Promise<AuthResponse> => {
   return apiRequest(API_ENDPOINTS.AUTH.ISSUE_TOKEN, {
     method: 'GET',
@@ -205,7 +202,6 @@ export const issueToken = async (): Promise<AuthResponse> => {
   });
 };
 
-// Logout
 export const logout = (): void => {
   clearAuthToken();
 };
