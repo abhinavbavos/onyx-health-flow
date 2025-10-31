@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Search, Edit, Trash2 } from "lucide-react";
+import { Search, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 
 const UserManagement = () => {
   const [users] = useState([
@@ -23,10 +24,7 @@ const UserManagement = () => {
             <h1 className="text-3xl font-bold">User Management</h1>
             <p className="text-muted-foreground mt-1">Manage all system users</p>
           </div>
-          <Button className="gradient-primary text-white">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+          <CreateUserDialog currentUserRole="super-admin" />
         </div>
 
         <Card>

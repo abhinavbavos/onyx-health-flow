@@ -49,6 +49,7 @@ const LoginPage = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [isPatientSignup, setIsPatientSignup] = useState(true);
 
   useEffect(() => {
     if (timer > 0) {
@@ -70,6 +71,7 @@ const LoginPage = () => {
     setSendingOtp(true);
     try {
       const phonePayload = ["91", phoneNumber];
+      // Only patients (users) can signup. All other roles just login (verification only)
       const response = await userAuth(phonePayload);
 
       toast({
@@ -171,11 +173,40 @@ const LoginPage = () => {
           </div>
           <CardTitle className="text-3xl font-bold">Onyx Health+</CardTitle>
           <CardDescription>
-            Sign in to your healthcare dashboard
+            {isPatientSignup ? "Sign up as a patient" : "Staff login"}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
+          {/* Toggle between Patient Signup and Staff Login */}
+          <div className="flex gap-2 mb-6">
+            <Button
+              type="button"
+              variant={isPatientSignup ? "default" : "outline"}
+              onClick={() => {
+                setIsPatientSignup(true);
+                setRole("user");
+                setOtpSent(false);
+                setOtp("");
+              }}
+              className="flex-1"
+            >
+              Patient Signup
+            </Button>
+            <Button
+              type="button"
+              variant={!isPatientSignup ? "default" : "outline"}
+              onClick={() => {
+                setIsPatientSignup(false);
+                setOtpSent(false);
+                setOtp("");
+              }}
+              className="flex-1"
+            >
+              Staff Login
+            </Button>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
             {/* PHONE NUMBER */}
             <div className="space-y-2">
@@ -197,7 +228,7 @@ const LoginPage = () => {
                 type="button"
                 variant="secondary"
                 onClick={handleSendOtp}
-                disabled={sendingOtp || !phoneNumber || timer > 0}
+                disabled={sendingOtp || !phoneNumber || timer > 0 || !isPatientSignup}
                 className="w-full flex items-center justify-center gap-2 mt-2"
               >
                 {sendingOtp ? (
@@ -207,10 +238,15 @@ const LoginPage = () => {
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    Send OTP
+                    {isPatientSignup ? "Send OTP" : "OTP (Staff login via admin)"}
                   </>
                 )}
               </Button>
+              {!isPatientSignup && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Staff accounts are created by administrators. Use your assigned credentials to login.
+                </p>
+              )}
             </div>
 
             {/* OTP FIELD */}
@@ -232,38 +268,37 @@ const LoginPage = () => {
               </div>
             )}
 
-            {/* ROLE SELECTION */}
-            <div className="space-y-2">
-              <Label htmlFor="role">Select Role</Label>
-              <Select
-                value={role}
-                onValueChange={(value) => setRole(value as UserRole)}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super-admin">Super Admin</SelectItem>
-                  <SelectItem value="executive-admin">
-                    Executive Admin
-                  </SelectItem>
-                  <SelectItem value="cluster-head">Cluster Head</SelectItem>
-                  <SelectItem value="user-head">User Head</SelectItem>
-                  <SelectItem value="nurse">Nurse</SelectItem>
-                  <SelectItem value="technician">Technician</SelectItem>
-                  <SelectItem value="user">Patient</SelectItem>
-                  <SelectItem value="doctor">Doctor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* ROLE SELECTION - Only for Staff Login */}
+            {!isPatientSignup && (
+              <div className="space-y-2">
+                <Label htmlFor="role">Select Role</Label>
+                <Select
+                  value={role}
+                  onValueChange={(value) => setRole(value as UserRole)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="super-admin">Super Admin</SelectItem>
+                    <SelectItem value="executive-admin">Executive Admin</SelectItem>
+                    <SelectItem value="cluster-head">Cluster Head</SelectItem>
+                    <SelectItem value="user-head">User Head</SelectItem>
+                    <SelectItem value="nurse">Nurse</SelectItem>
+                    <SelectItem value="technician">Technician</SelectItem>
+                    <SelectItem value="doctor">Doctor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <Button
               type="submit"
               className="w-full gradient-primary"
               disabled={loading || !otpSent}
             >
-              {loading ? "Verifying..." : "Sign In"}
+              {loading ? "Verifying..." : isPatientSignup ? "Sign Up" : "Sign In"}
             </Button>
           </form>
         </CardContent>

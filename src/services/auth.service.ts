@@ -48,6 +48,14 @@ export const userAuthVerify = async (
 // ==========================
 // SUPER ADMIN
 // ==========================
+export const createSuperAdmin = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.CREATE_SUPER_ADMIN, {
+    method: 'POST',
+    data: { phone_number },
+    requiresAuth: true,
+  });
+};
+
 export const verifySuperAdmin = async (
   phone_number: string[],
   country: string,
@@ -69,6 +77,14 @@ export const verifySuperAdmin = async (
 // ==========================
 // EXECUTIVE ADMIN
 // ==========================
+export const createExecAdmin = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.CREATE_EXEC_ADMIN, {
+    method: 'POST',
+    data: { phone_number },
+    requiresAuth: true,
+  });
+};
+
 export const verifyExecAdmin = async (
   phone_number: string[],
   country: string,
@@ -90,6 +106,14 @@ export const verifyExecAdmin = async (
 // ==========================
 // CLUSTER HEAD
 // ==========================
+export const createClusterHead = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.CREATE_CLUSTER_HEAD, {
+    method: 'POST',
+    data: { phone_number },
+    requiresAuth: true,
+  });
+};
+
 export const verifyClusterHead = async (
   phone_number: string[],
   country: string,
@@ -111,6 +135,14 @@ export const verifyClusterHead = async (
 // ==========================
 // USER HEAD
 // ==========================
+export const createUserHead = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.CREATE_USER_HEAD, {
+    method: 'POST',
+    data: { phone_number },
+    requiresAuth: true,
+  });
+};
+
 export const verifyUserHead = async (
   phone_number: string[],
   country: string,
@@ -132,6 +164,14 @@ export const verifyUserHead = async (
 // ==========================
 // NURSE
 // ==========================
+export const createNurse = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.CREATE_NURSE, {
+    method: 'POST',
+    data: { phone_number },
+    requiresAuth: true,
+  });
+};
+
 export const verifyNurse = async (
   phone_number: string[],
   country: string,
@@ -153,6 +193,14 @@ export const verifyNurse = async (
 // ==========================
 // TECHNICIAN
 // ==========================
+export const createTechnician = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.CREATE_TECHNICIAN, {
+    method: 'POST',
+    data: { phone_number },
+    requiresAuth: true,
+  });
+};
+
 export const verifyTechnician = async (
   phone_number: string[],
   country: string,
@@ -174,6 +222,14 @@ export const verifyTechnician = async (
 // ==========================
 // DOCTOR / NON-USER
 // ==========================
+export const signinNonUser = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.SIGNIN_NON_USER, {
+    method: 'POST',
+    data: { phone_number },
+    requiresAuth: false,
+  });
+};
+
 export const verifyNonUser = async (
   phone_number: string[],
   country: string,
