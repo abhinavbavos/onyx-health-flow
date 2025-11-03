@@ -19,7 +19,7 @@ import LoginPage from "./components/auth/LoginPage";
 
 // Dashboards (Layouts with <Outlet />)
 import SuperAdminDashboard from "./pages/dashboard/SuperAdminDashboard";
-import ExecutiveAdminDashboard from "./pages/dashboard/ExecutiveAdminDashboard";
+import ExecutiveAdminDashboard from "./pages/dashboard/executive-admin/ExecutiveAdminDashboard";
 import ClusterHeadDashboard from "./pages/dashboard/ClusterHeadDashboard";
 import UserHeadDashboard from "./pages/dashboard/UserHeadDashboard";
 import NurseDashboard from "./pages/dashboard/NurseDashboard";
@@ -32,6 +32,7 @@ import UserManagement from "./pages/dashboard/super-admin/UserManagement";
 import AuditLogs from "./pages/dashboard/super-admin/AuditLogs";
 
 // Executive Admin pages
+import Overview from "./pages/dashboard/executive-admin/Overview";
 import Organizations from "./pages/dashboard/executive-admin/Organizations";
 import Doctors from "./pages/dashboard/executive-admin/Doctors";
 import Technicians from "./pages/dashboard/executive-admin/Technicians";
@@ -139,17 +140,17 @@ const App = () => (
           <Route
             element={<ProtectedRoute allowedRoles={["executive-admin"]} />}
           >
-            <Route
-              path="/dashboard/executive-admin"
-              element={<ExecutiveAdminDashboard />}
-            >
-              <Route index element={<Organizations />} />
-              <Route path="organizations" element={<Organizations />} />
-              <Route path="doctors" element={<Doctors />} />
-              <Route path="technicians" element={<Technicians />} />
-              <Route path="devices" element={<Devices />} />
-              <Route path="reports" element={<Reports />} />
-            </Route>
+          <Route
+            path="/dashboard/executive-admin"
+            element={<ExecutiveAdminDashboard />}
+          >
+            <Route index element={<Overview />} />
+            <Route path="organizations" element={<Organizations />} />
+            <Route path="doctors" element={<Doctors />} />
+            <Route path="technicians" element={<Technicians />} />
+            <Route path="devices" element={<Devices />} />
+            <Route path="reports" element={<Reports />} />
+          </Route>
           </Route>
 
           {/* ===============================
