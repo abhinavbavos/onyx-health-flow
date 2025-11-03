@@ -37,6 +37,9 @@ export const API_ENDPOINTS = {
     
     // Token
     ISSUE_TOKEN: '/api/auth/issue-token',
+
+    REFRESH_TOKEN: '/api/auth/refresh-token',
+  LOGOUT: '/api/auth/logout',
   },
   
   // Profile endpoints

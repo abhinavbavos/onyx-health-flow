@@ -10,45 +10,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Activity, Lock, Phone, Send } from "lucide-react";
-import { UserRole } from "@/types/roles";
 import { useToast } from "@/hooks/use-toast";
 import {
   userAuth,
   userAuthVerify,
-  verifySuperAdmin,
-  verifyExecAdmin,
-  verifyClusterHead,
-  verifyUserHead,
-  verifyNurse,
-  verifyTechnician,
+  signinNonUser,
   verifyNonUser,
 } from "@/services/auth.service";
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
-  return "Something went wrong. Please try again.";
+  return "Unexpected error occurred.";
 }
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [country] = useState("India");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [otp, setOtp] = useState("");
-  const [role, setRole] = useState<UserRole>("user");
+
+  const [mode, setMode] = useState<"admin" | "patient">("admin");
+  const [step, setStep] = useState<"phone" | "verify">("phone");
   const [loading, setLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [timer, setTimer] = useState(0);
+
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (timer > 0) {
@@ -57,10 +46,13 @@ const LoginPage = () => {
     }
   }, [timer]);
 
+  // ============================
+  // Step 1: Send OTP
+  // ============================
   const handleSendOtp = async () => {
-    if (!phoneNumber) {
+    if (!phone) {
       toast({
-        title: "Error",
+        title: "Missing number",
         description: "Please enter your phone number",
         variant: "destructive",
       });
@@ -69,19 +61,29 @@ const LoginPage = () => {
 
     setSendingOtp(true);
     try {
-      const phonePayload = ["91", phoneNumber];
-      const response = await userAuth(phonePayload);
+      const phonePayload = ["91", phone];
+      console.log("📱 Sending OTP request:", { mode, phonePayload });
+
+      let response;
+      if (mode === "patient") {
+        response = await userAuth(phonePayload);
+      } else {
+        response = await signinNonUser(phonePayload);
+      }
+
+      console.log("✅ OTP Sent response:", response);
 
       toast({
         title: "OTP Sent",
-        description: response.message || "Check your phone for the OTP.",
+        description: response?.message || "Check your phone for the OTP.",
       });
 
-      setOtpSent(true);
+      setStep("verify");
       setTimer(30);
-    } catch (error: unknown) {
+    } catch (error: any) {
+      console.error("❌ OTP Send Error:", error);
       toast({
-        title: "Failed to Send OTP",
+        title: "Failed to send OTP",
         description: getErrorMessage(error),
         variant: "destructive",
       });
@@ -90,13 +92,22 @@ const LoginPage = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  // ============================
+  // Step 2: Verify OTP + Password
+  // ============================
+  const handleVerify = async () => {
     if (!otp) {
       toast({
-        title: "Error",
+        title: "Missing OTP",
         description: "Please enter the OTP",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (mode === "admin" && !password) {
+      toast({
+        title: "Missing password",
+        description: "Please enter your password",
         variant: "destructive",
       });
       return;
@@ -104,54 +115,44 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const phonePayload = ["91", phoneNumber];
+      console.log("🔍 Verifying credentials:", { mode, otp, password });
+
       let response;
-
-      switch (role) {
-        case "super-admin":
-          response = await verifySuperAdmin(phonePayload, country, otp);
-          break;
-        case "executive-admin":
-          response = await verifyExecAdmin(phonePayload, country, otp);
-          break;
-        case "cluster-head":
-          response = await verifyClusterHead(phonePayload, country, otp);
-          break;
-        case "user-head":
-          response = await verifyUserHead(phonePayload, country, otp);
-          break;
-        case "nurse":
-          response = await verifyNurse(phonePayload, country, otp);
-          break;
-        case "technician":
-          response = await verifyTechnician(phonePayload, country, otp);
-          break;
-        case "doctor":
-          response = await verifyNonUser(phonePayload, country, otp);
-          break;
-        default:
-          response = await userAuthVerify(phonePayload, country, otp);
-          break;
+      if (mode === "patient") {
+        response = await userAuthVerify({
+          phone_number: ["91", phone],
+          country: "India",
+          otp,
+        });
+      } else {
+        response = await verifyNonUser({
+          otp,
+          password,
+        });
       }
 
-      if (response.token || response.accessToken) {
-        localStorage.setItem(
-          "authToken",
-          response.token || response.accessToken
-        );
+      console.log("✅ Verify response:", response);
+
+      if (!response || (!response.accessToken && !response.token)) {
+        throw new Error("Invalid credentials or empty response from server.");
       }
-      localStorage.setItem("userRole", response.role || role);
-      localStorage.setItem("userPhone", phoneNumber);
+
+      // ✅ Store tokens
+      localStorage.setItem("authToken", response.accessToken || response.token);
+      localStorage.setItem("refreshToken", response.refreshToken || "");
+      localStorage.setItem("userRole", response.role.replace(/_/g, "-"));
+      localStorage.setItem("userPhone", phone);
 
       toast({
-        title: "Login Successful",
-        description: "Welcome to Onyx Health+",
+        title: "Login successful",
+        description: "Redirecting to dashboard...",
       });
 
-      navigate(`/dashboard/${response.role || role}`);
-    } catch (error: unknown) {
+      navigate(`/dashboard/${response.role || "user"}`);
+    } catch (error: any) {
+      console.error("❌ Verification Error:", error);
       toast({
-        title: "Login Failed",
+        title: "Verification failed",
         description: getErrorMessage(error),
         variant: "destructive",
       });
@@ -160,112 +161,108 @@ const LoginPage = () => {
     }
   };
 
+  // ============================
+  // UI Layout
+  // ============================
   return (
     <div className="min-h-screen flex items-center justify-center gradient-hero">
       <Card className="w-full max-w-md mx-4 shadow-lg">
-        <CardHeader className="space-y-1 text-center">
+        <CardHeader className="text-center space-y-2">
           <div className="flex justify-center mb-4">
             <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center">
               <Activity className="h-8 w-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-3xl font-bold">Onyx Health+</CardTitle>
-          <CardDescription>
-            Sign in to your healthcare dashboard
-          </CardDescription>
+          <CardDescription>Login to your dashboard</CardDescription>
         </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* PHONE NUMBER */}
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="text"
-                  placeholder="Enter phone number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="pl-10"
-                  disabled={loading || sendingOtp}
-                />
-              </div>
+        <CardContent className="space-y-5">
+          {/* Role Selector */}
+          <div className="flex justify-center gap-2">
+            <Button
+              variant={mode === "admin" ? "default" : "outline"}
+              onClick={() => setMode("admin")}
+              disabled={loading}
+            >
+              Admin
+            </Button>
+            <Button
+              variant={mode === "patient" ? "default" : "outline"}
+              onClick={() => setMode("patient")}
+              disabled={loading}
+            >
+              Patient
+            </Button>
+          </div>
 
+          {/* Step 1: Phone Input */}
+          {step === "phone" && (
+            <div className="space-y-3">
+              <Label>Mobile Number</Label>
+              <Input
+                type="tel"
+                placeholder="Enter mobile number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={loading || sendingOtp}
+              />
               <Button
-                type="button"
-                variant="secondary"
                 onClick={handleSendOtp}
-                disabled={sendingOtp || !phoneNumber || timer > 0}
-                className="w-full flex items-center justify-center gap-2 mt-2"
+                className="w-full gradient-primary"
+                disabled={sendingOtp || !phone}
               >
-                {sendingOtp ? (
-                  "Sending OTP..."
-                ) : timer > 0 ? (
-                  `Resend OTP in ${timer}s`
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    Send OTP
-                  </>
-                )}
+                {sendingOtp ? "Sending OTP..." : "Send OTP"}
               </Button>
             </div>
+          )}
 
-            {/* OTP FIELD */}
-            {otpSent && (
-              <div className="space-y-2">
-                <Label htmlFor="otp">OTP</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          {/* Step 2: Verify */}
+          {step === "verify" && (
+            <div className="space-y-3">
+              <Label>OTP</Label>
+              <Input
+                type="text"
+                placeholder="Enter 6-digit OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                disabled={loading}
+              />
+
+              {mode === "admin" && (
+                <>
+                  <Label>Password</Label>
                   <Input
-                    id="otp"
-                    type="text"
-                    placeholder="Enter OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="pl-10"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
                   />
-                </div>
-              </div>
-            )}
+                </>
+              )}
 
-            {/* ROLE SELECTION */}
-            <div className="space-y-2">
-              <Label htmlFor="role">Select Role</Label>
-              <Select
-                value={role}
-                onValueChange={(value) => setRole(value as UserRole)}
+              <Button
+                onClick={handleVerify}
+                className="w-full gradient-primary"
                 disabled={loading}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super-admin">Super Admin</SelectItem>
-                  <SelectItem value="executive-admin">
-                    Executive Admin
-                  </SelectItem>
-                  <SelectItem value="cluster-head">Cluster Head</SelectItem>
-                  <SelectItem value="user-head">User Head</SelectItem>
-                  <SelectItem value="nurse">Nurse</SelectItem>
-                  <SelectItem value="technician">Technician</SelectItem>
-                  <SelectItem value="user">Patient</SelectItem>
-                  <SelectItem value="doctor">Doctor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {loading ? "Verifying..." : "Login"}
+              </Button>
 
-            <Button
-              type="submit"
-              className="w-full gradient-primary"
-              disabled={loading || !otpSent}
-            >
-              {loading ? "Verifying..." : "Sign In"}
-            </Button>
-          </form>
+              <Button
+                variant="ghost"
+                className="w-full text-sm mt-2"
+                onClick={() => {
+                  setStep("phone");
+                  setOtp("");
+                  setPassword("");
+                }}
+              >
+                ← Resend OTP
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
