@@ -7,7 +7,10 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["dist"] },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+    ],
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
@@ -20,7 +23,18 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+
+      // ✅ Turn off annoying TypeScript rules
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-empty-function": "off",
+
+      // ✅ Optional: make react-hooks/exhaustive-deps warnings instead of errors
+      "react-hooks/exhaustive-deps": "warn",
+
+      // ✅ Optional: allow console.logs during development
+      "no-console": "off",
     },
-  },
+  }
 );

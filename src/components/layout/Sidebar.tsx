@@ -1,9 +1,10 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  Settings, 
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  User,
+  FileText,
+  Settings,
   Activity,
   Building2,
   UserCog,
@@ -12,17 +13,33 @@ import {
   Calendar,
   Shield,
   Stethoscope,
-  LogOut
+  LogOut,
+HeartPulse,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { logout } from "@/services/auth.service";
+import { useEffect, useState } from "react";
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const userRole = localStorage.getItem("userRole") || "user";
+  const [userRole, setUserRole] = useState<string>("user");
+
+  // 🧠 Normalize role on mount
+  useEffect(() => {
+    const role = localStorage.getItem("userRole") || "user";
+    const normalized = role.replace(/_/g, "-");
+    setUserRole(normalized);
+  }, []);
+
+  // Debug route and role
+  useEffect(() => {
+    console.log("📍 Current path:", location.pathname);
+    console.log("🧩 User role:", userRole);
+  }, [location, userRole]);
 
   const handleLogout = () => {
     logout();
@@ -35,7 +52,12 @@ const Sidebar = () => {
 
   const getNavigationItems = () => {
     const baseItems = [
-      { icon: LayoutDashboard, label: "Dashboard", path: `/dashboard/${userRole}` },
+      {
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        path: `/dashboard/${userRole}`,
+        exact: true,
+      },
     ];
 
     const roleSpecificItems: Record<string, any[]> = {
@@ -44,13 +66,57 @@ const Sidebar = () => {
         { icon: Users, label: "User Management", path: `/dashboard/${userRole}/users` },
         { icon: FileText, label: "Audit Logs", path: `/dashboard/${userRole}/audit` },
       ],
+
       "executive-admin": [
-        { icon: Building2, label: "Organizations", path: `/dashboard/${userRole}/organizations` },
-        { icon: Stethoscope, label: "Doctors", path: `/dashboard/${userRole}/doctors` },
-        { icon: UserCog, label: "Technicians", path: `/dashboard/${userRole}/technicians` },
-        { icon: Settings, label: "Devices", path: `/dashboard/${userRole}/devices` },
-        { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
-      ],
+        {
+  icon: Shield,
+  label: "Executive Admins",
+  path: "/dashboard/executive-admin/executives",
+},
+
+  {
+    icon: Users,
+    label: "Cluster Heads",
+    path: "/dashboard/executive-admin/cluster-heads",
+  },
+  {
+    icon: Building2,
+    label: "Organizations",
+    path: "/dashboard/executive-admin/organizations",
+  },
+  {
+    icon: User,
+    label: "User Heads",
+    path: "/dashboard/executive-admin/user-heads",
+  },
+  {
+    icon: HeartPulse,
+    label: "Nurses",
+    path: "/dashboard/executive-admin/nurses",
+  },
+  {
+    icon: UserCog,
+    label: "Technicians",
+    path: "/dashboard/executive-admin/technicians",
+  },
+  {
+    icon: Stethoscope,
+    label: "Doctors",
+    path: "/dashboard/executive-admin/doctors",
+  },
+  {
+    icon: Settings,
+    label: "Devices",
+    path: "/dashboard/executive-admin/devices",
+  },
+  {
+    icon: FileText,
+    label: "Reports",
+    path: "/dashboard/executive-admin/reports",
+  },
+],
+
+
       "cluster-head": [
         { icon: Building2, label: "Organizations", path: `/dashboard/${userRole}/organizations` },
         { icon: Users, label: "Team Management", path: `/dashboard/${userRole}/team` },
@@ -58,25 +124,29 @@ const Sidebar = () => {
         { icon: Settings, label: "Devices", path: `/dashboard/${userRole}/devices` },
         { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
       ],
+
       "user-head": [
         { icon: Users, label: "Nurses", path: `/dashboard/${userRole}/nurses` },
         { icon: Building2, label: "Organization", path: `/dashboard/${userRole}/organization` },
         { icon: Settings, label: "Devices", path: `/dashboard/${userRole}/devices` },
         { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
       ],
-      "nurse": [
+
+      nurse: [
         { icon: Settings, label: "Devices", path: `/dashboard/${userRole}/devices` },
         { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
         { icon: Building2, label: "Organization", path: `/dashboard/${userRole}/organization` },
       ],
-      "user": [
+
+      user: [
         { icon: Users, label: "Profile", path: `/dashboard/${userRole}/profile` },
         { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
         { icon: Video, label: "Sessions", path: `/dashboard/${userRole}/sessions` },
         { icon: Stethoscope, label: "Consultancy", path: `/dashboard/${userRole}/consultancy` },
         { icon: CreditCard, label: "Payments", path: `/dashboard/${userRole}/payments` },
       ],
-      "doctor": [
+
+      doctor: [
         { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
         { icon: Calendar, label: "Schedule", path: `/dashboard/${userRole}/schedule` },
         { icon: Video, label: "Consultations", path: `/dashboard/${userRole}/consultations` },
@@ -92,6 +162,7 @@ const Sidebar = () => {
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+      {/* Header */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
@@ -106,16 +177,18 @@ const Sidebar = () => {
         </div>
       </div>
 
+      {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
         {navigationItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
+            end={item.exact || false}
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-primary"
+                  ? "bg-sidebar-accent text-sidebar-primary font-semibold"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
               )
             }
@@ -126,6 +199,7 @@ const Sidebar = () => {
         ))}
       </nav>
 
+      {/* Footer */}
       <div className="p-4 border-t border-sidebar-border">
         <Button
           variant="ghost"

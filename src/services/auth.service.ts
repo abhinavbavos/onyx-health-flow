@@ -24,6 +24,7 @@ export const userAuth = async (phone_number: string[]): Promise<AuthResponse> =>
     method: "POST",
     data: { phone_number },
     requiresAuth: false,
+    withCredentials: true, // ✅ ensures any cookies are sent/stored properly
   });
 };
 
@@ -43,6 +44,7 @@ export const userAuthVerify = async ({
       method: "POST",
       data: { phone_number, country, otp },
       requiresAuth: false,
+      withCredentials: true, // ✅ critical for CORS cookies
     }
   );
 
@@ -60,6 +62,7 @@ export const signinNonUser = async (phone_number: string[]): Promise<AuthRespons
     method: "POST",
     data: { phone_number },
     requiresAuth: false,
+    withCredentials: true, // ✅ this must be present for the browser to store cookie
   });
 };
 
@@ -77,7 +80,7 @@ export const verifyNonUser = async ({
       method: "POST",
       data: { otp, password },
       requiresAuth: false,
-      withCredentials: true,
+      withCredentials: true, // ✅ this sends the cookie (__signInId)
     }
   );
 
@@ -92,6 +95,7 @@ export const issueToken = async (): Promise<AuthResponse> => {
   return apiRequest(API_ENDPOINTS.AUTH.ISSUE_TOKEN, {
     method: "GET",
     requiresAuth: true,
+    withCredentials: true,
   });
 };
 
@@ -113,6 +117,7 @@ export const refreshToken = async (): Promise<AuthResponse> => {
     method: "POST",
     data: { refreshToken },
     requiresAuth: false,
+    withCredentials: true,
   });
 
   if (response.accessToken) {

@@ -1,4 +1,6 @@
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://lia-unmilked-jagger.ngrok-free.dev';
+// export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://13.203.86.159';
+// export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 export const API_ENDPOINTS = {
   // Auth endpoints
@@ -92,9 +94,9 @@ export const API_ENDPOINTS = {
   
   // Organization endpoints
   ORGANIZATION: {
-    CREATE: '/create/organization',
-    LIST: '/list/organizations',
-    VIEW: (id: string) => `/view/organization/${id}`,
-    DELETE: (id: string) => `/delete/organization/${id}`,
-  },
+  CREATE: '/api/create/organization',
+  LIST: '/api/list/organizations',
+  VIEW: (id: string) => `/api/view/organization/${id}`,
+  DELETE: (id: string) => `/api/delete/organization/${id}`,
+},
 };

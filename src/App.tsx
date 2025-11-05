@@ -9,7 +9,7 @@ import {
   Route,
   Navigate,
   useNavigate,
-  Outlet,
+  useLocation,
 } from "react-router-dom";
 
 // Core pages
@@ -17,14 +17,14 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./components/auth/LoginPage";
 
-// Dashboards (Layouts with <Outlet />)
-import SuperAdminDashboard from "./pages/dashboard/SuperAdminDashboard";
-import ExecutiveAdminDashboard from "./pages/dashboard/ExecutiveAdminDashboard";
-import ClusterHeadDashboard from "./pages/dashboard/ClusterHeadDashboard";
-import UserHeadDashboard from "./pages/dashboard/UserHeadDashboard";
-import NurseDashboard from "./pages/dashboard/NurseDashboard";
-import UserDashboard from "./pages/dashboard/UserDashboard";
-import DoctorDashboard from "./pages/dashboard/DoctorDashboard";
+// Dashboards (Layouts)
+import SuperAdminDashboard from "./pages/dashboard/super-admin/SuperAdminDashboard";
+import ExecutiveAdminDashboard from "./pages/dashboard/executive-admin/ExecutiveAdminDashboard";
+import ClusterHeadDashboard from "./pages/dashboard/cluster-head/ClusterHeadDashboard";
+import UserHeadDashboard from "./pages/dashboard/user-head/UserHeadDashboard";
+import NurseDashboard from "./pages/dashboard/nurse/NurseDashboard";
+import UserDashboard from "./pages/dashboard/user/UserDashboard";
+import DoctorDashboard from "./pages/dashboard/doctor/DoctorDashboard";
 
 // Super Admin pages
 import RoleManagement from "./pages/dashboard/super-admin/RoleManagement";
@@ -32,18 +32,24 @@ import UserManagement from "./pages/dashboard/super-admin/UserManagement";
 import AuditLogs from "./pages/dashboard/super-admin/AuditLogs";
 
 // Executive Admin pages
+import ExecutiveAdmins from "./pages/dashboard/executive-admin/ExecutiveAdmins";
+import ClusterHeads from "./pages/dashboard/executive-admin/ClusterHeads";
 import Organizations from "./pages/dashboard/executive-admin/Organizations";
 import Doctors from "./pages/dashboard/executive-admin/Doctors";
 import Technicians from "./pages/dashboard/executive-admin/Technicians";
+import OrganizationView from "./pages/dashboard/executive-admin/OrganisationView";
+import Nurses from "./pages/dashboard/executive-admin/Nurses";
+import UserHeads from "./pages/dashboard/executive-admin/UserHeads";
+import Devices from "./pages/dashboard/executive-admin/Devices";
 
 // Cluster Head pages
 import TeamManagement from "./pages/dashboard/cluster-head/TeamManagement";
 
 // User Head pages
-import Nurses from "./pages/dashboard/user-head/Nurses";
+// import Nurses from "./pages/dashboard/user-head/Nurses";
 
 // Shared pages
-import Devices from "./pages/dashboard/shared/Devices";
+// import Devices from "./pages/dashboard/shared/Devices";
 import Reports from "./pages/dashboard/shared/Reports";
 import Payments from "./pages/dashboard/shared/Payments";
 import Organization from "./pages/dashboard/shared/Organization";
@@ -64,21 +70,40 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 const queryClient = new QueryClient();
 
 // ===============================
-// 🔐 Persistent Auth Redirect
+// 🔍 Route Logger (for debugging)
+// ===============================
+const RouteLogger = () => {
+  const location = useLocation();
+  useEffect(() => {
+    console.log("🗺️ Route changed:", location.pathname);
+  }, [location]);
+  return null;
+};
+
+// ===============================
+// 🔐 Persistent Auth Redirect (fixed)
 // ===============================
 const AutoRedirect = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     let role = localStorage.getItem("userRole");
 
     if (token && role) {
-      // normalize underscores → hyphens
       role = role.replace(/_/g, "-");
-      navigate(`/dashboard/${role}`);
+
+      // 🚫 Only redirect when user is on login/signup/home
+      const redirectPaths = ["/", "/login", "/signup"];
+      if (redirectPaths.includes(location.pathname)) {
+        console.log("🚀 Auto-redirecting to:", `/dashboard/${role}`);
+        navigate(`/dashboard/${role}`);
+      } else {
+        console.log("✅ Staying on current path:", location.pathname);
+      }
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   return null;
 };
@@ -92,6 +117,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RouteLogger />
         <AutoRedirect />
 
         <Routes>
@@ -144,11 +170,21 @@ const App = () => (
               element={<ExecutiveAdminDashboard />}
             >
               <Route index element={<Organizations />} />
+              <Route path="executives" element={<ExecutiveAdmins />} />
+
+              <Route path="cluster-heads" element={<ClusterHeads />} />
               <Route path="organizations" element={<Organizations />} />
+              <Route
+                path="organizations/:id"
+                element={<OrganizationView />}
+              />{" "}
+              {/* ✅ FIXED */}
               <Route path="doctors" element={<Doctors />} />
-              <Route path="technicians" element={<Technicians />} />
               <Route path="devices" element={<Devices />} />
-              <Route path="reports" element={<Reports />} />
+
+              <Route path="user-heads" element={<UserHeads />} />
+              <Route path="technicians" element={<Technicians />} />
+              <Route path="nurses" element={<Nurses />} />
             </Route>
           </Route>
 

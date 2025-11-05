@@ -13,17 +13,19 @@ export const createOrganization = async (data: any): Promise<Organization> => {
   });
 };
 
-export const listOrganizations = async (): Promise<Organization[]> => {
-  return apiRequest(API_ENDPOINTS.ORGANIZATION.LIST, {
-    method: 'GET',
+export const listOrganizations = async () => {
+  const res = await apiRequest("/api/list/organizations", {
+    method: "GET",
   });
+
+  // Normalize backend shape -> always return array
+  return res.organizations || [];
 };
 
-export const viewOrganization = async (id: string): Promise<Organization> => {
-  return apiRequest(API_ENDPOINTS.ORGANIZATION.VIEW(id), {
-    method: 'GET',
+export const viewOrganization = (id: string) =>
+  apiRequest(`/api/view/organization/${id}`, {
+    method: "GET",
   });
-};
 
 export const deleteOrganization = async (id: string): Promise<void> => {
   return apiRequest(API_ENDPOINTS.ORGANIZATION.DELETE(id), {
