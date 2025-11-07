@@ -41,6 +41,7 @@ import OrganizationView from "./pages/dashboard/executive-admin/OrganisationView
 import Nurses from "./pages/dashboard/executive-admin/Nurses";
 import UserHeads from "./pages/dashboard/executive-admin/UserHeads";
 import Devices from "./pages/dashboard/executive-admin/Devices";
+import Reports from "./pages/dashboard/executive-admin/Reports";
 
 // Cluster Head pages
 import TeamManagement from "./pages/dashboard/cluster-head/TeamManagement";
@@ -50,7 +51,7 @@ import TeamManagement from "./pages/dashboard/cluster-head/TeamManagement";
 
 // Shared pages
 // import Devices from "./pages/dashboard/shared/Devices";
-import Reports from "./pages/dashboard/shared/Reports";
+// import Reports from "./pages/dashboard/shared/Reports";
 import Payments from "./pages/dashboard/shared/Payments";
 import Organization from "./pages/dashboard/shared/Organization";
 
@@ -185,6 +186,7 @@ const App = () => (
               <Route path="user-heads" element={<UserHeads />} />
               <Route path="technicians" element={<Technicians />} />
               <Route path="nurses" element={<Nurses />} />
+              <Route path="reports" element={<Reports />} />
             </Route>
           </Route>
 
