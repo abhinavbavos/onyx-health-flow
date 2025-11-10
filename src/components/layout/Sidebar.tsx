@@ -69,50 +69,50 @@ const Sidebar = () => {
 
       "executive-admin": [
         {
-  icon: Shield,
-  label: "Executive Admins",
-  path: "/dashboard/executive-admin/executives",
-},
+          icon: Shield,
+          label: "Executive Admins",
+          path: `/dashboard/${userRole}/executives`,
+        },
 
-  {
-    icon: Users,
-    label: "Cluster Heads",
-    path: "/dashboard/executive-admin/cluster-heads",
-  },
-  {
-    icon: Building2,
-    label: "Organizations",
-    path: "/dashboard/executive-admin/organizations",
-  },
-  {
-    icon: User,
-    label: "User Heads",
-    path: "/dashboard/executive-admin/user-heads",
-  },
-  {
-    icon: HeartPulse,
-    label: "Nurses",
-    path: "/dashboard/executive-admin/nurses",
-  },
-  {
-    icon: UserCog,
-    label: "Technicians",
-    path: "/dashboard/executive-admin/technicians",
-  },
-  {
-    icon: Stethoscope,
-    label: "Doctors",
-    path: "/dashboard/executive-admin/doctors",
-  },
-  {
-    icon: Settings,
-    label: "Devices",
-    path: "/dashboard/executive-admin/devices",
-  },
-  {
-    icon: FileText,
-    label: "Reports",
-    path: "/dashboard/executive-admin/reports",
+        {
+          icon: Users,
+          label: "Cluster Heads",
+          path: `/dashboard/${userRole}/cluster-heads`,
+        },
+        {
+          icon: Building2,
+          label: "Organizations",
+          path: `/dashboard/${userRole}/organizations`,
+        },
+        {
+          icon: User,
+          label: "User Heads",
+          path: `/dashboard/${userRole}/user-heads`,
+        },
+        {
+          icon: HeartPulse,
+          label: "Nurses",
+          path: `/dashboard/${userRole}/nurses`,
+        },
+        {
+          icon: UserCog,
+          label: "Technicians",
+          path: `/dashboard/${userRole}/technicians`,
+        },
+        {
+          icon: Stethoscope,
+          label: "Doctors",
+          path: `/dashboard/${userRole}/doctors`,
+        },
+        {
+          icon: Settings,
+          label: "Devices",
+          path: `/dashboard/${userRole}/devices`,
+        },
+        {
+          icon: FileText,
+          label: "Reports",
+          path: `/dashboard/${userRole}/reports`,
   },
 ],
 
