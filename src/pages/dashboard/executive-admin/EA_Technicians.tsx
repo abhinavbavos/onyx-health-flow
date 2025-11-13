@@ -37,7 +37,7 @@ interface Technician {
   permissions?: string[];
 }
 
-const Technicians = () => {
+const EA_Technicians = () => {
   const { toast } = useToast();
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [filtered, setFiltered] = useState<Technician[]>([]);
@@ -412,4 +412,4 @@ const Technicians = () => {
   );
 };
 
-export default Technicians;
+export default EA_Technicians;

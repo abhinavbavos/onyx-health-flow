@@ -57,7 +57,7 @@ const Topbar = () => {
 
   const roleBadge = (
     <Badge className={`${roleColors[user?.role || ""] || "bg-muted text-foreground"} capitalize`}>
-      {user?.role?.replaceAll("_", " ")}
+      {user?.role?.replace(/_/g, " ")}
     </Badge>
   );
 
@@ -126,7 +126,7 @@ const Topbar = () => {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Role:</span>
                   <span className="font-medium capitalize">
-                    {user?.role?.replaceAll("_", " ")}
+                    {user?.role?.replace(/_/g, " ")}
                   </span>
                 </div>
                 <div className="flex justify-between">

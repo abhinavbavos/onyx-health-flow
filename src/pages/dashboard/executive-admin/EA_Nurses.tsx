@@ -51,7 +51,7 @@ interface Organization {
   userId?: { _id: string; name: string };
 }
 
-const Nurses = () => {
+const EA_Nurses = () => {
   const { toast } = useToast();
   const [nurses, setNurses] = useState<Nurse[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -557,4 +557,4 @@ const Nurses = () => {
   );
 };
 
-export default Nurses;
+export default EA_Nurses;

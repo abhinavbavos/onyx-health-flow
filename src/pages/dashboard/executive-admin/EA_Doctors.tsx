@@ -38,7 +38,7 @@ interface Organization {
   organizationName: string;
 }
 
-const Doctors = () => {
+const EA_Doctors = () => {
   const { toast } = useToast();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [filtered, setFiltered] = useState<Doctor[]>([]);
@@ -318,4 +318,4 @@ const Doctors = () => {
   );
 };
 
-export default Doctors;
+export default EA_Doctors;

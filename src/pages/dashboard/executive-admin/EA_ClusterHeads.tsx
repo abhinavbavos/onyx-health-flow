@@ -51,7 +51,7 @@ interface ClusterHead {
   };
 }
 
-const ClusterHeads = () => {
+const EA_ClusterHeads = () => {
   const { toast } = useToast();
 
   // ====== States ======
@@ -461,4 +461,4 @@ const ClusterHeads = () => {
   );
 };
 
-export default ClusterHeads;
+export default EA_ClusterHeads;

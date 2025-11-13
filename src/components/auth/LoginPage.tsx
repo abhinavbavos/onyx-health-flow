@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Activity, Lock, Phone, Send } from "lucide-react";
+import { Activity, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   userAuth,
@@ -34,6 +34,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
@@ -137,18 +138,41 @@ const LoginPage = () => {
         throw new Error("Invalid credentials or empty response from server.");
       }
 
-      // ✅ Store tokens
+      // ✅ Normalize role: convert underscores to hyphens
+      const normalizedRole = (response.role || mode).replace(/_/g, "-");
+
+      // ✅ Store tokens and user info
       localStorage.setItem("authToken", response.accessToken || response.token);
       localStorage.setItem("refreshToken", response.refreshToken || "");
-      localStorage.setItem("userRole", response.role.replace(/_/g, "-"));
+      localStorage.setItem("userRole", normalizedRole);
       localStorage.setItem("userPhone", phone);
 
+      // ✅ Store organization info if available
+      if (response.organization) {
+        localStorage.setItem(
+          "organizationId",
+          response.organization._id || response.organization.id
+        );
+        localStorage.setItem(
+          "organizationName",
+          response.organization.organizationName || ""
+        );
+        localStorage.setItem(
+          "organizationCode",
+          response.organization.organizationCode || ""
+        );
+        localStorage.setItem(
+          "userOrganization",
+          JSON.stringify(response.organization)
+        );
+      }
+
       toast({
-        title: "Login successful",
-        description: "Redirecting to dashboard...",
+        title: "Success",
+        description: "Login successful, redirecting to your dashboard...",
       });
 
-      navigate(`/dashboard/${response.role || "user"}`);
+      navigate(`/dashboard/${normalizedRole}`, { replace: true });
     } catch (error: any) {
       console.error("❌ Verification Error:", error);
       toast({
@@ -232,13 +256,28 @@ const LoginPage = () => {
               {mode === "admin" && (
                 <>
                   <Label>Password</Label>
-                  <Input
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={loading}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </>
               )}
 
@@ -257,6 +296,7 @@ const LoginPage = () => {
                   setStep("phone");
                   setOtp("");
                   setPassword("");
+                  setShowPassword(false);
                 }}
               >
                 ← Resend OTP

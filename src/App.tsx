@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import {
   BrowserRouter,
   Routes,
@@ -12,12 +13,16 @@ import {
   useLocation,
 } from "react-router-dom";
 
-// Core pages
+/* =======================
+   Public Pages
+======================= */
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import LoginPage from "./components/auth/LoginPage";
+import NotFound from "./pages/NotFound";
 
-// Dashboards (Layouts)
+/* =======================
+   Dashboards (Layouts)
+======================= */
 import SuperAdminDashboard from "./pages/dashboard/super-admin/SuperAdminDashboard";
 import ExecutiveAdminDashboard from "./pages/dashboard/executive-admin/ExecutiveAdminDashboard";
 import ClusterHeadDashboard from "./pages/dashboard/cluster-head/ClusterHeadDashboard";
@@ -26,53 +31,65 @@ import NurseDashboard from "./pages/dashboard/nurse/NurseDashboard";
 import UserDashboard from "./pages/dashboard/user/UserDashboard";
 import DoctorDashboard from "./pages/dashboard/doctor/DoctorDashboard";
 
-// Super Admin pages
+/* =======================
+   Super Admin Pages
+======================= */
 import RoleManagement from "./pages/dashboard/super-admin/RoleManagement";
 import UserManagement from "./pages/dashboard/super-admin/UserManagement";
 import AuditLogs from "./pages/dashboard/super-admin/AuditLogs";
 
-// Executive Admin pages
-import ExecutiveAdmins from "./pages/dashboard/executive-admin/ExecutiveAdmins";
-import ClusterHeads from "./pages/dashboard/executive-admin/ClusterHeads";
-import Organizations from "./pages/dashboard/executive-admin/Organizations";
-import Doctors from "./pages/dashboard/executive-admin/Doctors";
-import Technicians from "./pages/dashboard/executive-admin/Technicians";
-import OrganizationView from "./pages/dashboard/executive-admin/OrganisationView";
-import Nurses from "./pages/dashboard/executive-admin/Nurses";
-import UserHeads from "./pages/dashboard/executive-admin/UserHeads";
-import Devices from "./pages/dashboard/executive-admin/Devices";
-import Reports from "./pages/dashboard/executive-admin/Reports";
+/* =======================
+   Executive Admin Pages
+======================= */
+import EA_ExecutiveAdmins from "./pages/dashboard/executive-admin/EA_ExecutiveAdmins";
+import EA_ClusterHeads from "./pages/dashboard/executive-admin/EA_ClusterHeads";
+import EA_Organizations from "./pages/dashboard/executive-admin/EA_Organizations";
+import EA_OrganisationView from "./pages/dashboard/executive-admin/EA_OrganisationView";
+import EA_Technicians from "./pages/dashboard/executive-admin/EA_Technicians";
+import EA_Doctors from "./pages/dashboard/executive-admin/EA_Doctors";
+import EA_Devices from "./pages/dashboard/executive-admin/EA_Devices";
+import EA_Reports from "./pages/dashboard/executive-admin/EA_Reports";
+import EA_UserHeads from "./pages/dashboard/executive-admin/EA_UserHeads";
+import EA_Nurses from "./pages/dashboard/executive-admin/EA_Nurses";
 
-// Cluster Head pages
-import TeamManagement from "./pages/dashboard/cluster-head/TeamManagement";
+/* =======================
+   Cluster Head Pages
+======================= */
+import CH_TeamIndex from "./pages/dashboard/cluster-head/Team/CH_TeamIndex";
+import CH_UserHeads from "./pages/dashboard/cluster-head/Team/CH_UserHeads";
+import CH_Nurses from "./pages/dashboard/cluster-head/Team/CH_Nurses";
+import CH_Technicians from "./pages/dashboard/cluster-head/Team/CH_Technicians";
+import CH_Devices from "./pages/dashboard/cluster-head/CH_Devices";
+import CH_Reports from "./pages/dashboard/cluster-head/CH_Reports";
+import CH_Consultations from "./pages/dashboard/cluster-head/CH_Consultations";
 
-// User Head pages
-// import Nurses from "./pages/dashboard/user-head/Nurses";
-
-// Shared pages
-// import Devices from "./pages/dashboard/shared/Devices";
-// import Reports from "./pages/dashboard/shared/Reports";
+/* =======================
+   Shared Components
+======================= */
 import Payments from "./pages/dashboard/shared/Payments";
 import Organization from "./pages/dashboard/shared/Organization";
 
-// User pages
-import Profile from "./pages/dashboard/user/Profile";
+/* =======================
+   User pages
+======================= */
 import Sessions from "./pages/dashboard/user/Sessions";
 import Consultancy from "./pages/dashboard/user/Consultancy";
+import Profile from "./pages/dashboard/user/Profile";
 
-// Doctor pages
+/* =======================
+   Doctor pages
+======================= */
 import Schedule from "./pages/dashboard/doctor/Schedule";
 import Consultations from "./pages/dashboard/doctor/Consultations";
 import Prescriptions from "./pages/dashboard/doctor/Prescriptions";
 
-// Auth protection
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-// ===============================
-// 🔍 Route Logger (for debugging)
-// ===============================
+/* ===============================
+   Route Logger (Debug)
+=============================== */
 const RouteLogger = () => {
   const location = useLocation();
   useEffect(() => {
@@ -81,9 +98,9 @@ const RouteLogger = () => {
   return null;
 };
 
-// ===============================
-// 🔐 Persistent Auth Redirect (fixed)
-// ===============================
+/* ===============================
+   Auto Redirect After Login
+=============================== */
 const AutoRedirect = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,14 +111,11 @@ const AutoRedirect = () => {
 
     if (token && role) {
       role = role.replace(/_/g, "-");
+      localStorage.setItem("userRole", role);
 
-      // 🚫 Only redirect when user is on login/signup/home
-      const redirectPaths = ["/", "/login", "/signup"];
-      if (redirectPaths.includes(location.pathname)) {
-        console.log("🚀 Auto-redirecting to:", `/dashboard/${role}`);
+      const homeRoutes = ["/", "/login", "/signup"];
+      if (homeRoutes.includes(location.pathname)) {
         navigate(`/dashboard/${role}`);
-      } else {
-        console.log("✅ Staying on current path:", location.pathname);
       }
     }
   }, [navigate, location.pathname]);
@@ -109,9 +123,9 @@ const AutoRedirect = () => {
   return null;
 };
 
-// ===============================
-// 🚀 Main App Component
-// ===============================
+/* ===============================
+   MAIN APP
+=============================== */
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -122,37 +136,16 @@ const App = () => (
         <AutoRedirect />
 
         <Routes>
-          {/* ===============================
-              PUBLIC ROUTES
-          =============================== */}
+          {/* 🔓 Public Routes */}
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<LoginPage />} />
 
-          <Route
-            path="/signup"
-            element={
-              localStorage.getItem("userRole") &&
-              localStorage.getItem("userRole") !== "user" ? (
-                <Navigate
-                  to={`/dashboard/${localStorage
-                    .getItem("userRole")!
-                    .replace(/_/g, "-")}`}
-                  replace
-                />
-              ) : (
-                <LoginPage />
-              )
-            }
-          />
-
-          {/* ===============================
-              SUPER ADMIN
-          =============================== */}
+          {/* =======================
+              SUPER ADMIN ROUTES
+          ======================== */}
           <Route element={<ProtectedRoute allowedRoles={["super-admin"]} />}>
-            <Route
-              path="/dashboard/super-admin"
-              element={<SuperAdminDashboard />}
-            >
+            <Route path="/dashboard/super-admin" element={<SuperAdminDashboard />}>
               <Route index element={<RoleManagement />} />
               <Route path="roles" element={<RoleManagement />} />
               <Route path="users" element={<UserManagement />} />
@@ -160,109 +153,109 @@ const App = () => (
             </Route>
           </Route>
 
-          {/* ===============================
-              EXECUTIVE ADMIN
-          =============================== */}
-          <Route
-            element={<ProtectedRoute allowedRoles={["executive-admin"]} />}
-          >
+          {/* =======================
+              EXECUTIVE ADMIN ROUTES
+          ======================== */}
+          <Route element={<ProtectedRoute allowedRoles={["executive-admin"]} />}>
             <Route
               path="/dashboard/executive-admin"
               element={<ExecutiveAdminDashboard />}
             >
-              <Route index element={<Organizations />} />
-              <Route path="executives" element={<ExecutiveAdmins />} />
+              <Route index element={<EA_Organizations />} />
 
-              <Route path="cluster-heads" element={<ClusterHeads />} />
-              <Route path="organizations" element={<Organizations />} />
-              <Route
-                path="organizations/:id"
-                element={<OrganizationView />}
-              />{" "}
-              {/* ✅ FIXED */}
-              <Route path="doctors" element={<Doctors />} />
-              <Route path="devices" element={<Devices />} />
+              <Route path="organizations" element={<EA_Organizations />} />
+              <Route path="organizations/:id" element={<EA_OrganisationView />} />
 
-              <Route path="user-heads" element={<UserHeads />} />
-              <Route path="technicians" element={<Technicians />} />
-              <Route path="nurses" element={<Nurses />} />
-              <Route path="reports" element={<Reports />} />
+              <Route path="executives" element={<EA_ExecutiveAdmins />} />
+              <Route path="cluster-heads" element={<EA_ClusterHeads />} />
+
+              <Route path="doctors" element={<EA_Doctors />} />
+              <Route path="user-heads" element={<EA_UserHeads />} />
+              <Route path="nurses" element={<EA_Nurses />} />
+              <Route path="technicians" element={<EA_Technicians />} />
+
+              <Route path="devices" element={<EA_Devices />} />
+              <Route path="reports" element={<EA_Reports />} />
             </Route>
           </Route>
 
-          {/* ===============================
-              CLUSTER HEAD
-          =============================== */}
+          {/* =======================
+              CLUSTER HEAD ROUTES
+          ======================== */}
           <Route element={<ProtectedRoute allowedRoles={["cluster-head"]} />}>
             <Route
               path="/dashboard/cluster-head"
               element={<ClusterHeadDashboard />}
             >
-              <Route index element={<TeamManagement />} />
-              <Route path="organizations" element={<Organizations />} />
-              <Route path="team" element={<TeamManagement />} />
-              <Route path="payments" element={<Payments />} />
-              <Route path="devices" element={<Devices />} />
-              <Route path="reports" element={<Reports />} />
+              <Route index element={<ClusterHeadDashboard />} />
+
+              {/* Team */}
+              <Route path="team" element={<CH_TeamIndex />} />
+              <Route path="team/user-heads" element={<CH_UserHeads />} />
+              <Route path="team/nurses" element={<CH_Nurses />} />
+              <Route path="team/technicians" element={<CH_Technicians />} />
+
+              {/* Others */}
+              <Route path="devices" element={<CH_Devices />} />
+              <Route path="reports" element={<CH_Reports />} />
+              <Route path="consultations" element={<CH_Consultations />} />
             </Route>
           </Route>
 
-          {/* ===============================
-              USER HEAD
-          =============================== */}
+          {/* =======================
+              USER HEAD ROUTES
+          ======================== */}
           <Route element={<ProtectedRoute allowedRoles={["user-head"]} />}>
             <Route path="/dashboard/user-head" element={<UserHeadDashboard />}>
-              <Route index element={<Nurses />} />
-              <Route path="nurses" element={<Nurses />} />
+              <Route index element={<CH_Nurses />} />
+              <Route path="nurses" element={<CH_Nurses />} />
               <Route path="organization" element={<Organization />} />
-              <Route path="devices" element={<Devices />} />
-              <Route path="reports" element={<Reports />} />
+              <Route path="devices" element={<EA_Devices />} />
+              <Route path="reports" element={<EA_Reports />} />
             </Route>
           </Route>
 
-          {/* ===============================
-              NURSE
-          =============================== */}
+          {/* =======================
+              NURSE ROUTES
+          ======================== */}
           <Route element={<ProtectedRoute allowedRoles={["nurse"]} />}>
             <Route path="/dashboard/nurse" element={<NurseDashboard />}>
-              <Route index element={<Devices />} />
-              <Route path="devices" element={<Devices />} />
-              <Route path="reports" element={<Reports />} />
+              <Route index element={<EA_Devices />} />
+              <Route path="devices" element={<EA_Devices />} />
+              <Route path="reports" element={<EA_Reports />} />
               <Route path="organization" element={<Organization />} />
             </Route>
           </Route>
 
-          {/* ===============================
-              USER (PATIENT)
-          =============================== */}
+          {/* =======================
+              USER ROUTES
+          ======================== */}
           <Route element={<ProtectedRoute allowedRoles={["user"]} />}>
             <Route path="/dashboard/user" element={<UserDashboard />}>
               <Route index element={<Profile />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="reports" element={<Reports />} />
+              <Route path="reports" element={<EA_Reports />} />
               <Route path="sessions" element={<Sessions />} />
               <Route path="consultancy" element={<Consultancy />} />
               <Route path="payments" element={<Payments />} />
             </Route>
           </Route>
 
-          {/* ===============================
-              DOCTOR
-          =============================== */}
+          {/* =======================
+              DOCTOR ROUTES
+          ======================== */}
           <Route element={<ProtectedRoute allowedRoles={["doctor"]} />}>
             <Route path="/dashboard/doctor" element={<DoctorDashboard />}>
               <Route index element={<Schedule />} />
               <Route path="schedule" element={<Schedule />} />
               <Route path="consultations" element={<Consultations />} />
               <Route path="prescriptions" element={<Prescriptions />} />
-              <Route path="reports" element={<Reports />} />
+              <Route path="reports" element={<EA_Reports />} />
               <Route path="payments" element={<Payments />} />
             </Route>
           </Route>
 
-          {/* ===============================
-              NOT FOUND
-          =============================== */}
+          {/* ❌ Not Found */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

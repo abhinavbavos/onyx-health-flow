@@ -19,7 +19,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Search, Plus, Shield } from "lucide-react";
 import { createExecAdmin, verifyExecAdmin, listExecutives } from "@/services/executiveAdmin.service";
 
-const ExecutiveAdmins = () => {
+const EA_ExecutiveAdmins = () => {
   const { toast } = useToast();
   const [executives, setExecutives] = useState<any[]>([]);
   const [filteredExecutives, setFilteredExecutives] = useState<any[]>([]);
@@ -328,4 +328,4 @@ const ExecutiveAdmins = () => {
   );
 };
 
-export default ExecutiveAdmins;
+export default EA_ExecutiveAdmins;

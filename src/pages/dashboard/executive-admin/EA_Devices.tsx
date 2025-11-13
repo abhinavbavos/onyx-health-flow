@@ -19,7 +19,7 @@ interface Device {
   status?: string;
 }
 
-const Devices = () => {
+const EA_Devices = () => {
   const { toast } = useToast();
   const [devices, setDevices] = useState<Device[]>([]);
   const [filtered, setFiltered] = useState<Device[]>([]);
@@ -167,4 +167,4 @@ const Devices = () => {
   );
 };
 
-export default Devices;
+export default EA_Devices;

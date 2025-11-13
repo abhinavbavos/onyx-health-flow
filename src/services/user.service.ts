@@ -18,3 +18,10 @@ export const updateUser = async (id: string, data: any): Promise<User> => {
     data,
   });
 };
+
+export const listUsers = async (): Promise<User[]> => {
+  const endpoint = (API_ENDPOINTS.USER as any).LIST ?? '/users';
+  return apiRequest(endpoint, {
+    method: 'GET',
+  });
+};

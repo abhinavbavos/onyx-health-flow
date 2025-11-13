@@ -22,6 +22,14 @@ export const getSessions = async (status?: string): Promise<Session[]> => {
   });
 };
 
+export const listSessions = async (status?: string): Promise<Session[]> => {
+  const params = status ? { status } : {};
+  return apiRequest(API_ENDPOINTS.SESSION.GET_ALL, {
+    method: 'GET',
+    params,
+  });
+};
+
 export const viewSession = async (id: string): Promise<Session> => {
   return apiRequest(API_ENDPOINTS.SESSION.VIEW(id), {
     method: 'GET',

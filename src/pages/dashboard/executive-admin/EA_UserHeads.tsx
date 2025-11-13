@@ -58,7 +58,7 @@ interface Organization {
   userId?: { _id: string; name: string };
 }
 
-const UserHeads = () => {
+const EA_UserHeads = () => {
   const { toast } = useToast();
   const [userHeads, setUserHeads] = useState<UserHead[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -533,4 +533,4 @@ const UserHeads = () => {
   );
 };
 
-export default UserHeads;
+export default EA_UserHeads;

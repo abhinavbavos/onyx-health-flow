@@ -39,7 +39,7 @@ interface Report {
   };
 }
 
-const Reports = () => {
+const EA_Reports = () => {
   const { toast } = useToast();
   const [reports, setReports] = useState<Report[]>([]);
   const [filtered, setFiltered] = useState<Report[]>([]);
@@ -277,4 +277,4 @@ const Reports = () => {
   );
 };
 
-export default Reports;
+export default EA_Reports;

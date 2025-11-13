@@ -28,7 +28,7 @@ import {
 } from "@/services/organization.service";
 import { useNavigate } from "react-router-dom"; // ✅ import navigation
 
-const Organizations = () => {
+const EA_Organizations = () => {
   const { toast } = useToast();
   const navigate = useNavigate(); // ✅ initialize navigation hook
   const [orgs, setOrgs] = useState<any[]>([]);
@@ -281,4 +281,4 @@ const Organizations = () => {
   );
 };
 
-export default Organizations;
+export default EA_Organizations;

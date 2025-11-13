@@ -42,7 +42,7 @@ interface Organization {
   technicians?: any[];
 }
 
-const OrganizationView = () => {
+const EA_OrganizationView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -260,4 +260,4 @@ const OrganizationView = () => {
   );
 };
 
-export default OrganizationView;
+export default EA_OrganizationView;

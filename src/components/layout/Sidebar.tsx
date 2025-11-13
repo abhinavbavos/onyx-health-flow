@@ -1,213 +1,304 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+
 import {
   LayoutDashboard,
   Users,
-  User,
+  User2,
   FileText,
   Settings,
   Activity,
-  Building2,
-  UserCog,
-  CreditCard,
-  Video,
-  Calendar,
-  Shield,
-  Stethoscope,
+  MessageSquare,
+  ChevronDown,
+  ChevronLeft,
   LogOut,
-HeartPulse,
+  HeartPulse,
+  Stethoscope,
+  Building2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { logout } from "@/services/auth.service";
-import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+/* ============================================================
+   FINAL UNIFIED SIDEBAR (all roles)
+============================================================ */
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [userRole, setUserRole] = useState<string>("user");
 
-  // 🧠 Normalize role on mount
+  const [collapsed, setCollapsed] = useState(false);
+  const [userRole, setUserRole] = useState("");
+  const [expanded, setExpanded] = useState<string[]>([]);
+
+  /* Load correct role */
   useEffect(() => {
-    const role = localStorage.getItem("userRole") || "user";
-    const normalized = role.replace(/_/g, "-");
-    setUserRole(normalized);
+    const role = (localStorage.getItem("userRole") || "user").replace(
+      /_/g,
+      "-"
+    );
+    setUserRole(role);
   }, []);
 
-  // Debug route and role
-  useEffect(() => {
-    console.log("📍 Current path:", location.pathname);
-    console.log("🧩 User role:", userRole);
-  }, [location, userRole]);
-
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-    navigate("/login");
-  };
-
-  const getNavigationItems = () => {
-    const baseItems = [
+  /* Role-based navigation */
+  const NAV: Record<string, any[]> = {
+    "executive-admin": [
       {
-        icon: LayoutDashboard,
         label: "Dashboard",
-        path: `/dashboard/${userRole}`,
-        exact: true,
+        icon: LayoutDashboard,
+        path: "/dashboard/executive-admin",
       },
-    ];
+      {
+        label: "Organizations",
+        icon: Building2,
+        path: "/dashboard/executive-admin/organizations",
+      },
+      {
+        label: "Cluster Heads",
+        icon: Users,
+        path: "/dashboard/executive-admin/cluster-heads",
+      },
+      {
+        label: "Executives",
+        icon: Users,
+        path: "/dashboard/executive-admin/executives",
+      },
+      {
+        label: "Doctors",
+        icon: Stethoscope,
+        path: "/dashboard/executive-admin/doctors",
+      },
+      {
+        label: "User Heads",
+        icon: User2,
+        path: "/dashboard/executive-admin/user-heads",
+      },
+      {
+        label: "Nurses",
+        icon: HeartPulse,
+        path: "/dashboard/executive-admin/nurses",
+      },
+      {
+        label: "Technicians",
+        icon: Users,
+        path: "/dashboard/executive-admin/technicians",
+      },
+      {
+        label: "Devices",
+        icon: Settings,
+        path: "/dashboard/executive-admin/devices",
+      },
+      {
+        label: "Reports",
+        icon: FileText,
+        path: "/dashboard/executive-admin/reports",
+      },
+    ],
 
-    const roleSpecificItems: Record<string, any[]> = {
-      "super-admin": [
-        { icon: Shield, label: "Role Management", path: `/dashboard/${userRole}/roles` },
-        { icon: Users, label: "User Management", path: `/dashboard/${userRole}/users` },
-        { icon: FileText, label: "Audit Logs", path: `/dashboard/${userRole}/audit` },
-      ],
-
-      "executive-admin": [
-        {
-          icon: Shield,
-          label: "Executive Admins",
-          path: `/dashboard/${userRole}/executives`,
-        },
-
-        {
-          icon: Users,
-          label: "Cluster Heads",
-          path: `/dashboard/${userRole}/cluster-heads`,
-        },
-        {
-          icon: Building2,
-          label: "Organizations",
-          path: `/dashboard/${userRole}/organizations`,
-        },
-        {
-          icon: User,
-          label: "User Heads",
-          path: `/dashboard/${userRole}/user-heads`,
-        },
-        {
-          icon: HeartPulse,
-          label: "Nurses",
-          path: `/dashboard/${userRole}/nurses`,
-        },
-        {
-          icon: UserCog,
-          label: "Technicians",
-          path: `/dashboard/${userRole}/technicians`,
-        },
-        {
-          icon: Stethoscope,
-          label: "Doctors",
-          path: `/dashboard/${userRole}/doctors`,
-        },
-        {
-          icon: Settings,
-          label: "Devices",
-          path: `/dashboard/${userRole}/devices`,
-        },
-        {
-          icon: FileText,
-          label: "Reports",
-          path: `/dashboard/${userRole}/reports`,
-  },
-],
-
-
-      "cluster-head": [
-        { icon: Building2, label: "Organizations", path: `/dashboard/${userRole}/organizations` },
-        { icon: Users, label: "Team Management", path: `/dashboard/${userRole}/team` },
-        { icon: CreditCard, label: "Payments", path: `/dashboard/${userRole}/payments` },
-        { icon: Settings, label: "Devices", path: `/dashboard/${userRole}/devices` },
-        { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
-      ],
-
-      "user-head": [
-        { icon: Users, label: "Nurses", path: `/dashboard/${userRole}/nurses` },
-        { icon: Building2, label: "Organization", path: `/dashboard/${userRole}/organization` },
-        { icon: Settings, label: "Devices", path: `/dashboard/${userRole}/devices` },
-        { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
-      ],
-
-      nurse: [
-        { icon: Settings, label: "Devices", path: `/dashboard/${userRole}/devices` },
-        { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
-        { icon: Building2, label: "Organization", path: `/dashboard/${userRole}/organization` },
-      ],
-
-      user: [
-        { icon: Users, label: "Profile", path: `/dashboard/${userRole}/profile` },
-        { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
-        { icon: Video, label: "Sessions", path: `/dashboard/${userRole}/sessions` },
-        { icon: Stethoscope, label: "Consultancy", path: `/dashboard/${userRole}/consultancy` },
-        { icon: CreditCard, label: "Payments", path: `/dashboard/${userRole}/payments` },
-      ],
-
-      doctor: [
-        { icon: FileText, label: "Reports", path: `/dashboard/${userRole}/reports` },
-        { icon: Calendar, label: "Schedule", path: `/dashboard/${userRole}/schedule` },
-        { icon: Video, label: "Consultations", path: `/dashboard/${userRole}/consultations` },
-        { icon: Activity, label: "Prescriptions", path: `/dashboard/${userRole}/prescriptions` },
-        { icon: CreditCard, label: "Payments", path: `/dashboard/${userRole}/payments` },
-      ],
-    };
-
-    return [...baseItems, ...(roleSpecificItems[userRole] || [])];
+    "cluster-head": [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard/cluster-head",
+      },
+      {
+        label: "Team Management",
+        icon: Users,
+        path: "/dashboard/cluster-head/team",
+        children: [
+          { label: "Overview", path: "/dashboard/cluster-head/team" },
+          {
+            label: "User Heads",
+            path: "/dashboard/cluster-head/team/user-heads",
+          },
+          { label: "Nurses", path: "/dashboard/cluster-head/team/nurses" },
+          {
+            label: "Technicians",
+            path: "/dashboard/cluster-head/team/technicians",
+          },
+        ],
+      },
+      {
+        label: "Devices",
+        icon: Settings,
+        path: "/dashboard/cluster-head/devices",
+      },
+      {
+        label: "Reports",
+        icon: FileText,
+        path: "/dashboard/cluster-head/reports",
+      },
+      {
+        label: "Consultations",
+        icon: MessageSquare,
+        path: "/dashboard/cluster-head/consultations",
+      },
+    ],
   };
 
-  const navigationItems = getNavigationItems();
+  const items = NAV[userRole] || [];
+
+  /* Active state check */
+  const isActive = (path: string) => location.pathname === path;
+  const isChildActive = (path: string) => location.pathname.startsWith(path);
+
+  /* Auto expand correct submenu */
+  useEffect(() => {
+    items.forEach((item) => {
+      if (item.children) {
+        const active = item.children.some((c: any) =>
+          location.pathname.startsWith(c.path)
+        );
+        if (active && !expanded.includes(item.path)) {
+          setExpanded((prev) => [...prev, item.path]);
+        }
+      }
+    });
+  }, [location.pathname]);
+
+  const toggleExpand = (path: string) => {
+    setExpanded((prev) =>
+      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
+    );
+  };
+
+  const toggleCollapse = () => setCollapsed((prev) => !prev);
+
+  /* ============================================================
+      UI RENDER
+  ============================================================= */
 
   return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      {/* Header */}
-      <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
-            <Activity className="h-5 w-5 text-white" />
+    <aside
+      className={cn(
+        "min-h-screen border-r bg-background flex flex-col transition-all duration-300",
+        collapsed ? "w-20" : "w-64"
+      )}
+    >
+      {/* HEADER */}
+      <div className="h-16 border-b flex items-center justify-between px-4">
+        <div
+          className={cn(
+            "flex items-center gap-3 transition-all",
+            collapsed && "w-full justify-center"
+          )}
+        >
+          <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shadow-md">
+            <Activity className="h-6 w-6 text-white" />
           </div>
-          <div>
-            <h2 className="font-bold text-sidebar-foreground">Onyx Health+</h2>
-            <p className="text-xs text-sidebar-foreground/60 capitalize">
-              {userRole.replace("-", " ")}
-            </p>
-          </div>
+
+          {!collapsed && (
+            <div>
+              <h2 className="font-bold text-lg">Onyx Health+</h2>
+              <p className="text-xs text-muted-foreground capitalize">
+                {userRole}
+              </p>
+            </div>
+          )}
         </div>
+
+        {!collapsed && (
+          <button
+            onClick={toggleCollapse}
+            className="ml-auto text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ChevronLeft />
+          </button>
+        )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
-        {navigationItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.exact || false}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-primary font-semibold"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              )
-            }
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="font-medium">{item.label}</span>
-          </NavLink>
-        ))}
+      {/* NAVIGATION */}
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+        {items.map((item) => {
+          const isExpanded = expanded.includes(item.path);
+
+          return (
+            <div key={item.path}>
+              {/* Parent Button */}
+              <Button
+                variant={isActive(item.path) ? "default" : "ghost"}
+                className={cn(
+                  "w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all",
+                  isActive(item.path)
+                    ? "gradient-primary text-white shadow-md"
+                    : "hover:bg-accent/10 hover:text-accent",
+                  collapsed && "justify-center"
+                )}
+                onClick={() =>
+                  item.children ? toggleExpand(item.path) : navigate(item.path)
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5" />
+                  {!collapsed && <span>{item.label}</span>}
+                </div>
+
+                {!collapsed && item.children && (
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      isExpanded && "rotate-180"
+                    )}
+                  />
+                )}
+              </Button>
+
+              {/* Submenu */}
+              {item.children && (
+                <div
+                  className={cn(
+                    "ml-4 overflow-hidden transition-all duration-300",
+                    isExpanded ? "max-h-96" : "max-h-0"
+                  )}
+                >
+                  {item.children.map((sub: any) => {
+                    // ✅ Fix: Use exact match for all subroutes
+                    const isSubActive = location.pathname === sub.path;
+
+                    return (
+                      <Button
+                        key={sub.path}
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start text-sm px-4 py-2 mt-1 rounded-md transition-all duration-200",
+                          isSubActive
+                            ? "bg-accent/20 text-accent font-medium border-l-2 border-accent"
+                            : "hover:bg-accent/10 hover:text-accent hover:translate-x-1",
+                          collapsed && "hidden"
+                        )}
+                        onClick={() => navigate(sub.path)}
+                      >
+                        {sub.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      {/* LOGOUT */}
+      <div className="border-t p-4">
         <Button
-          variant="ghost"
-          className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-          onClick={handleLogout}
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-destructive hover:bg-destructive/10",
+            collapsed && "justify-center"
+          )}
+          onClick={() => {
+            logout();
+            toast({ title: "Signed out" });
+            navigate("/login");
+          }}
         >
-          <LogOut className="h-5 w-5 mr-3" />
-          Logout
+          <LogOut className="mr-2 h-4 w-4" />
+          {!collapsed && "Sign Out"}
         </Button>
       </div>
     </aside>
