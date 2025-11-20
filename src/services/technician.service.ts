@@ -5,14 +5,24 @@ export const listTechnicians = async () => {
   return res.technicians || res.data || [];
 };
 
-export const createTechnician = async (payload: any) => {
+// Step 1: Send OTP to technician's phone (with full data)
+export const sendTechnicianOTP = async (payload: {
+  phone_number: string[];
+  password: string;
+  name: string;
+  country: string;
+  permissions: string[];
+}) => {
+  console.log("🔐 Checking auth token:", localStorage.getItem("authToken") ? "Present" : "Missing");
+  
   return apiRequest("/api/auth/create/technician", {
     method: "POST",
     data: payload,
   });
 };
 
-export const verifyTechnician = async (payload: any) => {
+// Step 2: Verify OTP (only OTP needed)
+export const verifyTechnicianOTP = async (payload: { otp: string }) => {
   return apiRequest("/api/auth/create/verify-technician", {
     method: "POST",
     data: payload,
@@ -21,4 +31,4 @@ export const verifyTechnician = async (payload: any) => {
 
 export const deleteTechnician = async (id: string) => {
   return apiRequest(`/api/delete/technician/${id}`, { method: "DELETE" });
-}
+};

@@ -184,8 +184,8 @@ const EA_ClusterHeads = () => {
     }
     try {
       await verifyClusterHead({
-        phone_number: createdPhone,
-        code: otpCode,
+        // phone_number: createdPhone,
+        otp: otpCode,
       });
       toast({ title: "Cluster Head verified successfully" });
       setVerifyDialog(false);
