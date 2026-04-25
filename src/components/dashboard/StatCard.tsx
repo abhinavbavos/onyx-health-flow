@@ -1,5 +1,4 @@
 import { LucideIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface StatCardProps {
@@ -15,44 +14,35 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, icon: Icon, trend, variant = "default" }: StatCardProps) => {
   const variantStyles = {
-    default: "bg-card",
-    primary: "gradient-primary text-white",
-    secondary: "gradient-secondary text-white",
-    success: "bg-success text-success-foreground",
-    warning: "bg-warning text-warning-foreground",
+    default: "bg-white/80 backdrop-blur-md text-[#2d3748] shadow-sm border border-white/60",
+    primary: "bg-gradient-to-r from-[#9b66c9] to-[#de6b9d] text-white shadow-md border-none",
+    secondary: "bg-gradient-to-r from-[#a855f7] to-[#d946ef] text-white shadow-md border-none",
+    success: "bg-gradient-to-r from-[#4ad099] to-[#3dbb89] text-white shadow-md border-none",
+    warning: "bg-gradient-to-r from-[#fb923c] to-[#f97316] text-white shadow-md border-none",
   };
 
   return (
-    <Card className={cn("shadow-card transition-all hover:shadow-lg", variantStyles[variant])}>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className={cn(
-              "text-sm font-medium",
-              variant === "default" ? "text-muted-foreground" : "text-inherit opacity-90"
-            )}>
-              {title}
-            </p>
-            <p className="text-3xl font-bold">{value}</p>
-            {trend && (
-              <p className={cn(
-                "text-sm font-medium flex items-center gap-1",
-                trend.isPositive ? "text-success" : "text-destructive",
-                variant !== "default" && "text-inherit opacity-80"
-              )}>
+    <div className={cn("rounded-[24px] transition-all hover:scale-[1.02] p-5 flex items-center justify-between", variantStyles[variant])}>
+       <div className="space-y-1">
+          <p className="text-xs font-bold opacity-90 tracking-wide">{title}</p>
+          <p className="text-3xl font-extrabold leading-none pb-1">{value}</p>
+          <p className="text-[10px] font-bold opacity-80 flex items-center gap-1 uppercase tracking-wider">
+            {trend ? (
+              <>
                 {trend.isPositive ? "↑" : "↓"} {trend.value}
-              </p>
+              </>
+            ) : (
+              "↑ Active"
             )}
-          </div>
-          <div className={cn(
-            "h-12 w-12 rounded-xl flex items-center justify-center",
-            variant === "default" ? "bg-primary/10 text-primary" : "bg-white/20 text-inherit"
-          )}>
-            <Icon className="h-6 w-6" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          </p>
+       </div>
+       <div className={cn(
+          "h-10 w-10 rounded-[14px] flex items-center justify-center shrink-0",
+          variant === "default" ? "bg-[#f4ebff] text-[#9b66c9]" : "bg-white/20 text-white"
+        )}>
+          <Icon className="h-5 w-5" />
+       </div>
+    </div>
   );
 };
 

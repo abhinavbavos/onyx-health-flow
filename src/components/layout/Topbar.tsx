@@ -62,13 +62,13 @@ const Topbar = () => {
   );
 
   return (
-    <header className="h-16 border-b bg-card shadow-sm flex items-center justify-between px-6">
+    <header className="h-[72px] flex items-center justify-between px-8 mx-2 mb-4 bg-white/60 backdrop-blur-xl rounded-[24px] border border-white/80 shadow-sm z-10 relative">
       {/* Left side – Branding or section title */}
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-xl font-extrabold tracking-tight text-[#2d3748]">
           Onyx Health+ Dashboard
         </h1>
-        <p className="text-xs text-muted-foreground">Smart Health Administration</p>
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1">Smart Health Administration</p>
       </div>
 
       {/* Right side – User Section */}
@@ -84,22 +84,22 @@ const Topbar = () => {
         {/* User Info + Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-3 pl-2 pr-3">
+            <Button variant="ghost" className="flex items-center gap-3 pl-2 pr-3 h-12 rounded-full hover:bg-white/80 transition-colors">
               {/* Avatar */}
-              <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-white font-semibold text-sm uppercase">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#c850c0] to-[#ffcc70] flex items-center justify-center text-white font-bold text-lg uppercase shadow-sm shrink-0">
                 {user?.name ? user.name[0] : "U"}
               </div>
 
               {/* Info */}
               {loading ? (
-                <Skeleton className="h-10 w-40" />
+                <Skeleton className="h-10 w-40 rounded-full" />
               ) : (
                 <div className="text-left hidden sm:block">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm font-bold text-[#2d3748] leading-none">{user?.name}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
                     {roleBadge}
                     {user?.status === "Active" && (
-                      <span className="text-xs text-emerald-600 flex items-center gap-1">
+                      <span className="text-[10px] font-bold text-[#137333] flex items-center gap-1 uppercase tracking-wider bg-[#e6f4ea] px-2 py-0.5 rounded-full">
                         <ShieldCheck className="h-3 w-3" /> Active
                       </span>
                     )}
@@ -107,7 +107,7 @@ const Topbar = () => {
                 </div>
               )}
 
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 text-gray-400" />
             </Button>
           </DropdownMenuTrigger>
 

@@ -62,9 +62,36 @@ export const signinNonUser = async (phone_number: string[]): Promise<AuthRespons
     method: "POST",
     data: { phone_number },
     requiresAuth: false,
-    withCredentials: true, // ✅ this must be present for the browser to store cookie
+    withCredentials: true,
   });
 };
+
+// Password Reset - Step 1: Request OTP
+export const requestPasswordResetOtp = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+    method: "POST",
+    data: { phone_number },
+    requiresAuth: false,
+  });
+};
+
+// Password Reset - Step 2: Reset Password
+export const resetPassword = async ({
+  phone_number,
+  otp,
+  new_password,
+}: {
+  phone_number: string[];
+  otp: string;
+  new_password?: string;
+}): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+    method: "POST",
+    data: { phone_number, otp, new_password },
+    requiresAuth: false,
+  });
+};
+
 
 // Step 2: Verify OTP + Password
 export const verifyNonUser = async ({
@@ -72,7 +99,7 @@ export const verifyNonUser = async ({
   password,
 }: {
   otp: string;
-  password: string;
+  password?: string;
 }): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(
     API_ENDPOINTS.AUTH.VERIFY_NON_USER,

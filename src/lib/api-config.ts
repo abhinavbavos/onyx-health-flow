@@ -1,7 +1,7 @@
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://lia-unmilked-jagger.ngrok-free.dev';
+export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
+// export const API_BASE_URL = 'https://lia-unmilked-jagger.ngrok-free.dev';
 // export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://13.203.86.159';
 // export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
@@ -37,6 +37,10 @@ export const API_ENDPOINTS = {
     SIGNIN_NON_USER: '/api/auth/signin-non-user',
     VERIFY_NON_USER: '/api/auth/verify-non-user',
     
+    // Password Reset
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/reset-password',
+    
     // Token
     ISSUE_TOKEN: '/api/auth/issue-token',
 
@@ -55,11 +59,11 @@ export const API_ENDPOINTS = {
   
   // Session endpoints
   SESSION: {
-    CREATE: '/create/session',
-    GET_ALL: '/get/session',
-    VIEW: (id: string) => `/view/session/${id}`,
-    UPDATE: (id: string) => `/update/session/${id}`,
-    DELETE: (id: string) => `/delete/session/${id}`,
+    CREATE: '/api/session/create',
+    GET_ALL: '/api/session/sessionDetails',
+    VIEW: (id: string) => `/api/session/view/${id}`,
+    UPDATE: (id: string) => `/api/session/update/session/${id}`,
+    DELETE: (id: string) => `/api/session/delete/session/${id}`,
   },
   
   // Session Item endpoints
@@ -71,8 +75,8 @@ export const API_ENDPOINTS = {
   
   // Test endpoints
   TEST: {
-    ADD: '/api/test-details/add-test',
-    LIST: '/api/test-details/list-tests',
+    ADD: '/api/test/add-test',
+    LIST: '/api/test/list-tests',
   },
   
   // Model endpoints
@@ -88,15 +92,69 @@ export const API_ENDPOINTS = {
   
   // User endpoints
   USER: {
-    VIEW: (id: string) => `/view/user/${id}`,
+    VIEW: '/view/user',
     UPDATE: (id: string) => `/update/user/${id}`,
   },
   
   // Organization endpoints
   ORGANIZATION: {
-  CREATE: '/api/create/organization',
-  LIST: '/api/list/organizations',
-  VIEW: (id: string) => `/api/view/organization/${id}`,
-  DELETE: (id: string) => `/api/delete/organization/${id}`,
-},
+    CREATE: '/api/create/organization',
+    LIST: '/api/list/organizations',
+    VIEW: (id: string) => `/api/view/organization/${id}`,
+    DELETE: (id: string) => `/api/delete/organization/${id}`,
+  },
+  
+  // Linked Accounts endpoints
+  LINKED_ACCOUNTS: {
+    CREATE: '/create/linked-accounts',
+    LIST: '/list/linked-accounts',
+    VIEW: (id: string) => `/view/linked-accounts/${id}`,
+    UPDATE: (id: string) => `/update/linked-accounts/${id}`,
+    UPDATE_BANK: (id: string) => `/update/linked-accounts/${id}/bank`,
+    DELETE: (id: string) => `/delete/linked-accounts/${id}`,
+    VALIDATE: '/validate/linked-accounts',
+    ONBOARD_START: '/onboard/start',
+    ONBOARD_CALLBACK: '/onboard/callback',
+  },
+  
+  // Orders endpoints
+  ORDER: {
+    CREATE: '/create/order',
+    LIST: '/list/orders',
+  },
+  
+  // Report endpoints
+  REPORT: {
+    ADD: '/api/report/add',
+    GET_ALL: '/api/report/all',
+    BY_PROFILE: (id: string) => `/api/report/byProfile/${id}`,
+    BY_USER: (id: string) => `/api/report/byUser/${id}`,
+    BY_SESSION: (id: string) => `/api/report/bySession/${id}`,
+    BY_ORGANIZATION: (id: string) => `/api/report/byOrganization/${id}`,
+    BY_NURSE: (id: string) => `/api/report/byNurse/${id}`,
+    CLUSTER_HEAD: (id: string) => `/report/cluster_head/${id}`,
+  },
+  
+  // Doctor endpoints
+  DOCTOR: {
+    CREATE_ADMIN: '/api/doctor/admin/create',
+    APPROVE_ADMIN: '/api/doctor/admin/approve',
+    CREATE: '/api/doctor/create',
+    LIST: '/api/doctor/list',
+    AVAILABILITY: '/api/doctor/availability',
+  },
+  
+  // Booking endpoints
+  BOOKING: {
+    CREATE: '/api/booking/create',
+    CONFIRM: '/api/booking/confirm',
+    LIST: '/api/booking/list',
+  },
+  
+  // Ticket endpoints
+  TICKET: {
+    CREATE: '/api/ticket/create',
+    ADMIN_LIST: '/api/ticket/admin/list',
+    ADMIN_RESOLVE: (id: string) => `/api/ticket/admin/resolve/${id}`,
+  },
 };

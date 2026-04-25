@@ -62,6 +62,7 @@ import CH_Technicians from "./pages/dashboard/cluster-head/Team/CH_Technicians";
 import CH_Devices from "./pages/dashboard/cluster-head/CH_Devices";
 import CH_Reports from "./pages/dashboard/cluster-head/CH_Reports";
 import CH_Consultations from "./pages/dashboard/cluster-head/CH_Consultations";
+import CH_LinkedAccounts from "./pages/dashboard/cluster-head/CH_LinkedAccounts";
 
 /* =======================
    Shared Components
@@ -199,6 +200,7 @@ const App = () => (
               <Route path="devices" element={<CH_Devices />} />
               <Route path="reports" element={<CH_Reports />} />
               <Route path="consultations" element={<CH_Consultations />} />
+              <Route path="linked-accounts" element={<CH_LinkedAccounts />} />
             </Route>
           </Route>
 

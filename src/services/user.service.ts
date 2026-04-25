@@ -6,8 +6,8 @@ export interface User {
   [key: string]: any;
 }
 
-export const viewUser = async (id: string): Promise<User> => {
-  return apiRequest(API_ENDPOINTS.USER.VIEW(id), {
+export const viewUser = async (): Promise<User> => {
+  return apiRequest(API_ENDPOINTS.USER.VIEW, {
     method: 'GET',
   });
 };

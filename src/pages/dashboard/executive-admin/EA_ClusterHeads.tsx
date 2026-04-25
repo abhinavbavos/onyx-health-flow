@@ -421,33 +421,41 @@ const EA_ClusterHeads = () => {
                       className="border-b hover:bg-muted/40 transition-colors"
                     >
                       <td className="py-3 px-4 font-medium">{c.name}</td>
-                      <td className="py-3 px-4 text-muted-foreground flex items-center gap-1">
-                        <Phone className="h-4 w-4" /> +{c.phone_number?.join(" ")}
+                      <td className="py-3 px-4 text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-4 w-4" /> +{c.phone_number?.join(" ")}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         {c.organization?.organizationName || "—"}
                       </td>
-                      <td className="py-3 px-4 text-muted-foreground flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        {[
-                          c.organization?.location?.line1,
-                          c.organization?.location?.line2,
-                          c.organization?.location?.line3,
-                        ]
-                          .filter(Boolean)
-                          .join(", ")}
+                      <td className="py-3 px-4 text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 shrink-0" />
+                          <span>
+                            {[
+                              c.organization?.location?.line1,
+                              c.organization?.location?.line2,
+                              c.organization?.location?.line3,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </span>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 flex gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(c._id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="icon">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(c._id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

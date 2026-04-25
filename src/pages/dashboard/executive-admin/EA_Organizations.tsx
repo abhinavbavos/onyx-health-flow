@@ -219,55 +219,64 @@ const EA_Organizations = () => {
                         {org.organizationName}
                       </td>
                       <td
-                        className="py-3 px-4 text-muted-foreground flex items-center gap-2"
+                        className="py-3 px-4 text-muted-foreground"
                         onClick={() =>
                           navigate(
                             `/dashboard/executive-admin/organizations/${org.id}`
                           )
                         }
                       >
-                        <MapPin className="h-4 w-4" />
-                        {`${org.location.line1}, ${org.location.line2}`}
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 shrink-0" />
+                          <span>{`${org.location.line1}, ${org.location.line2}`}</span>
+                        </div>
                       </td>
-                      <td className="py-3 px-4 flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={async () => {
-                            const data = await viewOrganization(org.id);
-                            setFormData({
-                              id: org.id,
-                              name: data.organizationName,
-                              location: data.location.line1,
-                            });
-                            setEditMode(true);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            console.log(
-                              "🔍 Navigating to organization ID:",
-                              org.id
-                            );
-                            navigate(
-                              `/dashboard/executive-admin/organizations/${org.id}`
-                            );
-                          }}
-                        >
-                          <Eye className="h-4 w-4 text-primary" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(org.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const data = await viewOrganization(org.id);
+                              setFormData({
+                                id: org.id,
+                                name: data.organizationName,
+                                location: data.location.line1,
+                              });
+                              setEditMode(true);
+                              setDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log(
+                                "🔍 Navigating to organization ID:",
+                                org.id
+                              );
+                              navigate(
+                                `/dashboard/executive-admin/organizations/${org.id}`
+                              );
+                            }}
+                          >
+                            <Eye className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(org.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

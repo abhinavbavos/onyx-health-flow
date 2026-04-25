@@ -137,6 +137,11 @@ const Sidebar = () => {
         icon: MessageSquare,
         path: "/dashboard/cluster-head/consultations",
       },
+      {
+        label: "Linked Accounts",
+        icon: Building2,
+        path: "/dashboard/cluster-head/linked-accounts",
+      },
     ],
   };
 
@@ -175,27 +180,31 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        "min-h-screen border-r bg-background flex flex-col transition-all duration-300",
-        collapsed ? "w-20" : "w-64"
+        "glass-panel flex flex-col transition-all duration-300 rounded-[30px] my-2 ml-2 shadow-2xl relative border-none z-20 overflow-hidden",
+        collapsed ? "w-20" : "w-[280px]"
       )}
     >
       {/* HEADER */}
-      <div className="h-16 border-b flex items-center justify-between px-4">
+      <div className="h-20 flex items-center justify-between px-4 pt-4">
         <div
           className={cn(
             "flex items-center gap-3 transition-all",
             collapsed && "w-full justify-center"
           )}
         >
-          <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shadow-md">
-            <Activity className="h-6 w-6 text-white" />
+          <div className="h-12 w-12 rounded-[20px] bg-white flex items-center justify-center shadow-sm shrink-0">
+            {/* Custom Icon for Sidebar Header */}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-[#2d3748]">
+              <path fillRule="evenodd" d="M3 2.25a.75.75 0 000 1.5v16.5h16.5a.75.75 0 001.5 0V3.75a.75.75 0 00-.75-.75H3zM4.5 3.75v15h15v-15h-15z" clipRule="evenodd" />
+              <path d="M9.75 9a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5z" />
+            </svg>
           </div>
 
           {!collapsed && (
-            <div>
-              <h2 className="font-bold text-lg">Onyx Health+</h2>
-              <p className="text-xs text-muted-foreground capitalize">
-                {userRole}
+            <div className="flex flex-col justify-center">
+              <h2 className="font-extrabold text-lg text-[#2d3748] tracking-tight leading-tight">Onyx Health+</h2>
+              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mt-0.5">
+                {userRole.replace("-", " ")}
               </p>
             </div>
           )}
@@ -204,28 +213,27 @@ const Sidebar = () => {
         {!collapsed && (
           <button
             onClick={toggleCollapse}
-            className="ml-auto text-muted-foreground hover:text-primary transition-colors"
+            className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/60 text-gray-400 hover:text-gray-800 transition-colors"
           >
-            <ChevronLeft />
+            <ChevronLeft className="w-5 h-5" />
           </button>
         )}
       </div>
 
       {/* NAVIGATION */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto custom-scrollbar">
         {items.map((item) => {
           const isExpanded = expanded.includes(item.path);
 
           return (
             <div key={item.path}>
               {/* Parent Button */}
-              <Button
-                variant={isActive(item.path) ? "default" : "ghost"}
+              <button
                 className={cn(
-                  "w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all",
-                  isActive(item.path)
-                    ? "gradient-primary text-white shadow-md"
-                    : "hover:bg-accent/10 hover:text-accent",
+                  "w-full flex items-center justify-between px-2 py-2 rounded-[20px] transition-all duration-200 border-none",
+                  isActive(item.path) || isExpanded
+                    ? "bg-white/70 shadow-sm text-[#2d3748]"
+                    : "hover:bg-white/40 text-gray-500 hover:text-gray-800",
                   collapsed && "justify-center"
                 )}
                 onClick={() =>
@@ -233,49 +241,56 @@ const Sidebar = () => {
                 }
               >
                 <div className="flex items-center gap-3">
-                  <item.icon className="h-5 w-5" />
-                  {!collapsed && <span>{item.label}</span>}
+                  <div className={cn(
+                    "p-2.5 rounded-full flex items-center justify-center transition-colors",
+                    isActive(item.path) || isExpanded ? "bg-white shadow-md text-[#2d3748]" : "text-gray-400"
+                  )}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  {!collapsed && <span className="font-bold text-sm tracking-wide">{item.label}</span>}
                 </div>
 
                 {!collapsed && item.children && (
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 transition-transform",
-                      isExpanded && "rotate-180"
-                    )}
-                  />
+                  <div className="pr-2 text-gray-400">
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 transition-transform",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                  </div>
                 )}
-              </Button>
+              </button>
 
               {/* Submenu */}
               {item.children && (
                 <div
                   className={cn(
-                    "ml-4 overflow-hidden transition-all duration-300",
-                    isExpanded ? "max-h-96" : "max-h-0"
+                    "ml-11 overflow-hidden transition-all duration-300",
+                    isExpanded ? "max-h-96 opacity-100 mt-1" : "max-h-0 opacity-0"
                   )}
                 >
-                  {item.children.map((sub: any) => {
-                    // ✅ Fix: Use exact match for all subroutes
-                    const isSubActive = location.pathname === sub.path;
+                  <div className="pl-2 border-l-2 border-gray-200/50 py-1 space-y-1">
+                    {item.children.map((sub: any) => {
+                      const isSubActive = location.pathname === sub.path;
 
-                    return (
-                      <Button
-                        key={sub.path}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start text-sm px-4 py-2 mt-1 rounded-md transition-all duration-200",
-                          isSubActive
-                            ? "bg-accent/20 text-accent font-medium border-l-2 border-accent"
-                            : "hover:bg-accent/10 hover:text-accent hover:translate-x-1",
-                          collapsed && "hidden"
-                        )}
-                        onClick={() => navigate(sub.path)}
-                      >
-                        {sub.label}
-                      </Button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={sub.path}
+                          className={cn(
+                            "w-full flex justify-start text-xs font-bold px-4 py-2 rounded-xl transition-all duration-200 text-left",
+                            isSubActive
+                              ? "bg-white/60 text-[#2d3748] shadow-sm"
+                              : "text-gray-500 hover:bg-white/30 hover:text-gray-800",
+                            collapsed && "hidden"
+                          )}
+                          onClick={() => navigate(sub.path)}
+                        >
+                          {sub.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -284,22 +299,33 @@ const Sidebar = () => {
       </nav>
 
       {/* LOGOUT */}
-      <div className="border-t p-4">
-        <Button
-          variant="outline"
-          className={cn(
-            "w-full justify-start text-destructive hover:bg-destructive/10",
-            collapsed && "justify-center"
-          )}
-          onClick={() => {
-            logout();
-            toast({ title: "Signed out" });
-            navigate("/login");
-          }}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          {!collapsed && "Sign Out"}
-        </Button>
+      <div className="mt-auto p-4 flex justify-center pb-6">
+        {collapsed ? (
+          <button
+            className="h-12 w-12 bg-[#eb4e4e] rounded-[18px] flex items-center justify-center text-white shadow-lg hover:opacity-90 transition-opacity"
+            onClick={() => {
+              logout();
+              toast({ title: "Signed out" });
+              navigate("/login");
+            }}
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
+        ) : (
+          <button
+            className="w-full flex items-center justify-start bg-[#fce8e6] text-[#c5221f] hover:bg-[#fad2cf] rounded-[24px] p-2 pr-4 transition-colors"
+            onClick={() => {
+              logout();
+              toast({ title: "Signed out" });
+              navigate("/login");
+            }}
+          >
+            <div className="h-10 w-10 bg-[#eb4e4e] rounded-[18px] flex items-center justify-center text-white mr-3 shadow-md shrink-0">
+              <LogOut className="h-4 w-4" />
+            </div>
+            <span className="font-bold text-sm tracking-wide">Sign Out</span>
+          </button>
+        )}
       </div>
     </aside>
   );
