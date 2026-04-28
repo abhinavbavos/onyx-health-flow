@@ -53,24 +53,18 @@ const Sidebar = () => {
         path: "/dashboard/executive-admin",
       },
       {
-        label: "Organizations",
-        icon: Building2,
-        path: "/dashboard/executive-admin/organizations",
+        label: "Executive Admins",
+        icon: Users,
+        path: "/dashboard/executive-admin/executives",
       },
       {
         label: "Cluster Heads",
         icon: Users,
         path: "/dashboard/executive-admin/cluster-heads",
-      },
-      {
-        label: "Executives",
-        icon: Users,
-        path: "/dashboard/executive-admin/executives",
-      },
-      {
-        label: "Doctors",
-        icon: Stethoscope,
-        path: "/dashboard/executive-admin/doctors",
+        children: [
+          { label: "All Cluster Heads", path: "/dashboard/executive-admin/cluster-heads" },
+          { label: "Organizations", path: "/dashboard/executive-admin/organizations" }
+        ]
       },
       {
         label: "User Heads",
@@ -78,14 +72,19 @@ const Sidebar = () => {
         path: "/dashboard/executive-admin/user-heads",
       },
       {
+        label: "Technicians",
+        icon: Settings, // or another appropriate icon
+        path: "/dashboard/executive-admin/technicians",
+      },
+      {
         label: "Nurses",
         icon: HeartPulse,
         path: "/dashboard/executive-admin/nurses",
       },
       {
-        label: "Technicians",
-        icon: Users,
-        path: "/dashboard/executive-admin/technicians",
+        label: "Doctors",
+        icon: Stethoscope,
+        path: "/dashboard/executive-admin/doctors",
       },
       {
         label: "Devices",
@@ -185,20 +184,19 @@ const Sidebar = () => {
       )}
     >
       {/* HEADER */}
-      <div className="h-20 flex items-center justify-between px-4 pt-4">
-        <div
-          className={cn(
-            "flex items-center gap-3 transition-all",
-            collapsed && "w-full justify-center"
-          )}
-        >
-          <div className="h-12 w-12 rounded-[20px] bg-white flex items-center justify-center shadow-sm shrink-0">
+      <div className={cn("h-20 flex items-center px-4 pt-4 relative", collapsed ? "justify-center" : "justify-between")}>
+        <div className="flex items-center gap-3 transition-all">
+          <button 
+            onClick={toggleCollapse}
+            className="h-12 w-12 rounded-[20px] bg-white flex items-center justify-center shadow-sm shrink-0 hover:scale-105 active:scale-95 transition-all"
+            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
             {/* Custom Icon for Sidebar Header */}
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-[#2d3748]">
               <path fillRule="evenodd" d="M3 2.25a.75.75 0 000 1.5v16.5h16.5a.75.75 0 001.5 0V3.75a.75.75 0 00-.75-.75H3zM4.5 3.75v15h15v-15h-15z" clipRule="evenodd" />
               <path d="M9.75 9a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5z" />
             </svg>
-          </div>
+          </button>
 
           {!collapsed && (
             <div className="flex flex-col justify-center">
@@ -213,7 +211,7 @@ const Sidebar = () => {
         {!collapsed && (
           <button
             onClick={toggleCollapse}
-            className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/60 text-gray-400 hover:text-gray-800 transition-colors"
+            className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/60 text-gray-400 hover:text-gray-800 transition-colors shrink-0"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>

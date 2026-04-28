@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StatCard from "@/components/dashboard/StatCard";
 import { viewOrganization } from "@/services/organization.service";
-import { Users, User2, HeartPulse } from "lucide-react";
+import { listTechnicians } from "@/services/technician.service";
+import { Users, User2, HeartPulse, Wrench } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const CH_TeamIndex = () => {
@@ -10,9 +11,10 @@ const CH_TeamIndex = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ userHeads: 0, nurses: 0 });
+  const [stats, setStats] = useState({ userHeads: 0, nurses: 0, technicians: 0 });
   const [userHeads, setUserHeads] = useState<any[]>([]);
   const [nurses, setNurses] = useState<any[]>([]);
+  const [technicians, setTechnicians] = useState<any[]>([]);
 
   const fetchTeamData = async () => {
     try {
@@ -21,12 +23,16 @@ const CH_TeamIndex = () => {
       const data = await viewOrganization(orgId!);
       const org = data.organization || data;
 
+      const techData = await listTechnicians();
+
       setStats({
         userHeads: org.userHead?.length || 0,
         nurses: org.nurse?.length || 0,
+        technicians: techData?.length || 0,
       });
       setUserHeads(org.userHead || []);
       setNurses(org.nurse || []);
+      setTechnicians(techData || []);
     } catch (err: any) {
       console.error(err);
       toast({
@@ -61,7 +67,7 @@ const CH_TeamIndex = () => {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="User Heads"
           value={stats.userHeads.toString()}
@@ -76,114 +82,177 @@ const CH_TeamIndex = () => {
           variant="secondary"
           trend={{ value: "Active", isPositive: true }}
         />
+        <StatCard
+          title="Technicians"
+          value={stats.technicians.toString()}
+          icon={Wrench}
+          variant="warning"
+          trend={{ value: "Active", isPositive: true }}
+        />
       </div>
 
-      {/* User Heads Table */}
-      <div className="bg-card rounded-lg shadow-card p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">User Heads</h3>
-          <button
-            onClick={() => navigate("/dashboard/cluster-head/team/user-heads")}
-            className="text-sm text-primary hover:underline"
-          >
-            View All →
-          </button>
-        </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-3 px-4 font-semibold">Name</th>
-              <th className="text-left py-3 px-4 font-semibold">Phone</th>
-              <th className="text-left py-3 px-4 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {userHeads.slice(0, 3).map((u, i) => (
-              <tr
-                key={i}
-                className="border-b hover:bg-muted/50 transition-colors"
-              >
-                <td className="py-3 px-4 font-medium">{u.name}</td>
-                <td className="py-3 px-4">+{u.phone_number?.join(" ")}</td>
-                <td className="py-3 px-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      u.status === "Active"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-rose-100 text-rose-700"
-                    }`}
-                  >
-                    {u.status}
-                  </span>
-                </td>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* User Heads Table */}
+        <div className="bg-card rounded-lg shadow-card p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold">User Heads</h3>
+            <button
+              onClick={() => navigate("/dashboard/cluster-head/team/user-heads")}
+              className="text-sm text-primary hover:underline"
+            >
+              View All →
+            </button>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-semibold">Name</th>
+                <th className="text-left py-3 px-4 font-semibold">Phone</th>
+                <th className="text-left py-3 px-4 font-semibold">Status</th>
               </tr>
-            ))}
-            {userHeads.length === 0 && (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="text-center text-muted-foreground py-4"
+            </thead>
+            <tbody>
+              {userHeads.slice(0, 3).map((u, i) => (
+                <tr
+                  key={i}
+                  className="border-b hover:bg-muted/50 transition-colors"
                 >
-                  No user heads found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  <td className="py-3 px-4 font-medium">{u.name}</td>
+                  <td className="py-3 px-4">+{u.phone_number?.join(" ")}</td>
+                  <td className="py-3 px-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        u.status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700"
+                      }`}
+                    >
+                      {u.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {userHeads.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="text-center text-muted-foreground py-4"
+                  >
+                    No user heads found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Nurses Table */}
-      <div className="bg-card rounded-lg shadow-card p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Nurses</h3>
-          <button
-            onClick={() => navigate("/dashboard/cluster-head/team/nurses")}
-            className="text-sm text-primary hover:underline"
-          >
-            View All →
-          </button>
-        </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left py-3 px-4 font-semibold">Name</th>
-              <th className="text-left py-3 px-4 font-semibold">Phone</th>
-              <th className="text-left py-3 px-4 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {nurses.slice(0, 3).map((n, i) => (
-              <tr
-                key={i}
-                className="border-b hover:bg-muted/50 transition-colors"
-              >
-                <td className="py-3 px-4 font-medium">{n.name}</td>
-                <td className="py-3 px-4">+{n.phone_number?.join(" ")}</td>
-                <td className="py-3 px-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      n.status === "Active"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-rose-100 text-rose-700"
-                    }`}
-                  >
-                    {n.status}
-                  </span>
-                </td>
+        {/* Nurses Table */}
+        <div className="bg-card rounded-lg shadow-card p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold">Nurses</h3>
+            <button
+              onClick={() => navigate("/dashboard/cluster-head/team/nurses")}
+              className="text-sm text-primary hover:underline"
+            >
+              View All →
+            </button>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-semibold">Name</th>
+                <th className="text-left py-3 px-4 font-semibold">Phone</th>
+                <th className="text-left py-3 px-4 font-semibold">Status</th>
               </tr>
-            ))}
-            {nurses.length === 0 && (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="text-center text-muted-foreground py-4"
+            </thead>
+            <tbody>
+              {nurses.slice(0, 3).map((n, i) => (
+                <tr
+                  key={i}
+                  className="border-b hover:bg-muted/50 transition-colors"
                 >
-                  No nurses found
-                </td>
+                  <td className="py-3 px-4 font-medium">{n.name}</td>
+                  <td className="py-3 px-4">+{n.phone_number?.join(" ")}</td>
+                  <td className="py-3 px-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        n.status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700"
+                      }`}
+                    >
+                      {n.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {nurses.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="text-center text-muted-foreground py-4"
+                  >
+                    No nurses found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Technicians Table */}
+        <div className="bg-card rounded-lg shadow-card p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold">Technicians</h3>
+            <button
+              onClick={() => navigate("/dashboard/cluster-head/team/technicians")}
+              className="text-sm text-primary hover:underline"
+            >
+              View All →
+            </button>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-semibold">Name</th>
+                <th className="text-left py-3 px-4 font-semibold">Phone</th>
+                <th className="text-left py-3 px-4 font-semibold">Status</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {technicians.slice(0, 3).map((t, i) => (
+                <tr
+                  key={i}
+                  className="border-b hover:bg-muted/50 transition-colors"
+                >
+                  <td className="py-3 px-4 font-medium">{t.name}</td>
+                  <td className="py-3 px-4">+{t.phone_number?.join(" ")}</td>
+                  <td className="py-3 px-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        t.status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700"
+                      }`}
+                    >
+                      {t.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {technicians.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="text-center text-muted-foreground py-4"
+                  >
+                    No technicians found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

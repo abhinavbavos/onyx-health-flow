@@ -1,8 +1,8 @@
 import { apiRequest } from "@/lib/api-request";
 
 export const listDoctors = async () => {
-  const res = await apiRequest("/api/view/AllDoctors", { method: "GET" });
-  return res.doctors || res.data || [];
+  const res = await apiRequest("/api/doctor/list", { method: "GET" });
+  return res.doctors || res.data || (Array.isArray(res) ? res : []);
 };
 
 export const createDoctor = async (payload: any) => {

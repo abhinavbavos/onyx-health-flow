@@ -115,50 +115,9 @@ const EA_Organizations = () => {
             <Building2 className="h-7 w-7 text-primary" /> Organizations
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage healthcare organizations connected to your network
+            View healthcare organizations connected to your network
           </p>
         </div>
-
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gradient-primary text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Organization
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editMode ? "Edit Organization" : "Add Organization"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <Input
-                placeholder="Organization Name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Location"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSubmit}>
-                {editMode ? "Save Changes" : "Create"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Search Bar */}
@@ -194,6 +153,7 @@ const EA_Organizations = () => {
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="text-left py-3 px-4 font-semibold">Name</th>
+                    <th className="text-left py-3 px-4 font-semibold">Cluster Head</th>
                     <th className="text-left py-3 px-4 font-semibold">
                       Location
                     </th>
@@ -226,9 +186,19 @@ const EA_Organizations = () => {
                           )
                         }
                       >
+                        {org.userId?.name || "N/A"}
+                      </td>
+                      <td
+                        className="py-3 px-4 text-muted-foreground"
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/executive-admin/organizations/${org.id}`
+                          )
+                        }
+                      >
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 shrink-0" />
-                          <span>{`${org.location.line1}, ${org.location.line2}`}</span>
+                          <span>{`${org.location?.line1 || ""}, ${org.location?.line2 || ""}`}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -236,45 +206,14 @@ const EA_Organizations = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              const data = await viewOrganization(org.id);
-                              setFormData({
-                                id: org.id,
-                                name: data.organizationName,
-                                location: data.location.line1,
-                              });
-                              setEditMode(true);
-                              setDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              console.log(
-                                "🔍 Navigating to organization ID:",
-                                org.id
-                              );
                               navigate(
                                 `/dashboard/executive-admin/organizations/${org.id}`
                               );
                             }}
                           >
                             <Eye className="h-4 w-4 text-primary" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(org.id);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </td>

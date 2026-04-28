@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Search,
@@ -26,6 +27,7 @@ import {
   Trash2,
   Phone,
   KeyRound,
+  RefreshCcw,
 } from "lucide-react";
 import {
   listClusterHeads,
@@ -34,6 +36,8 @@ import {
   deleteClusterHead,
 } from "@/services/clusterHead.service";
 import { getPermissions } from "@/services/permission.service";
+import { resendOtp } from "@/services/auth.service";
+import { cn } from "@/lib/utils";
 
 interface ClusterHead {
   _id: string;
@@ -76,6 +80,26 @@ const EA_ClusterHeads = () => {
     location: { line1: "", line2: "", line3: "" },
   });
 
+  const [timer, setTimer] = useState(0);
+
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => setTimer((t) => t - 1), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
+
+  const handleResendOtp = async () => {
+    if (timer > 0) return;
+    try {
+      await resendOtp(formData.phone_country && formData.phone_number ? [formData.phone_country, formData.phone_number] : [formData.phone_country || "91", createdPhone.slice(-createdPhone.length + (formData.phone_country?.length || 2))]);
+      setTimer(30);
+      toast({ title: "OTP Resent", description: "A new code has been sent to your phone." });
+    } catch (err) {
+      toast({ title: "Failed to resend OTP", variant: "destructive" });
+    }
+  };
+
   // ====== Fetch Cluster Heads ======
   const fetchClusterHeads = async () => {
     setLoading(true);
@@ -96,8 +120,6 @@ const EA_ClusterHeads = () => {
   const fetchPermissions = async () => {
   try {
     const data = await getPermissions();
-
-    // ✅ Safely handle multiple possible backend structures
     const permissionList =
       Array.isArray(data)
         ? data
@@ -106,11 +128,10 @@ const EA_ClusterHeads = () => {
         : Array.isArray(data.data)
         ? data.data
         : [];
-
     setPermissions(permissionList);
   } catch (err) {
     console.error("Error fetching permissions:", err);
-    setPermissions([]); // fallback
+    setPermissions([]); 
   }
 };
 
@@ -166,6 +187,7 @@ const EA_ClusterHeads = () => {
       setCreatedPhone(`${phone_country}${phone_number}`);
       setVerifyDialog(true);
       setDialogOpen(false);
+      setTimer(30);
       toast({
         title: "Cluster Head Created",
         description: "Please verify OTP to activate the account.",
@@ -184,7 +206,6 @@ const EA_ClusterHeads = () => {
     }
     try {
       await verifyClusterHead({
-        // phone_number: createdPhone,
         otp: otpCode,
       });
       toast({ title: "Cluster Head verified successfully" });
@@ -211,122 +232,118 @@ const EA_ClusterHeads = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Building2 className="h-7 w-7 text-primary" /> Cluster Heads
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-extrabold tracking-tight text-[#2d3748] flex items-center gap-3">
+            <Building2 className="h-10 w-10 text-primary" /> Cluster Heads
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Manage cluster heads and their associated organizations
+          <p className="text-lg text-gray-500 font-medium">
+            Onboard and manage primary stakeholders for clinical networks
           </p>
         </div>
 
-        {/* Create Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gradient-primary text-white">
-              <Plus className="h-4 w-4 mr-2" /> Add Cluster Head
+            <Button className="gradient-primary text-white rounded-2xl h-12 px-8 font-bold shadow-lg transition-all active:scale-95">
+              <Plus className="h-5 w-5 mr-2" /> Add Cluster Head
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create New Cluster Head</DialogTitle>
+          <DialogContent className="glass-panel border-none shadow-2xl sm:max-w-[600px] rounded-[30px] p-0 overflow-hidden">
+            <DialogHeader className="p-8 bg-white/40 border-b border-white/50">
+              <DialogTitle className="text-2xl font-bold text-[#2d3748]">New Cluster Stakeholder</DialogTitle>
             </DialogHeader>
 
-            <div className="grid gap-3 py-2">
-              <Input
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Code"
-                  value={formData.phone_country}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone_country: e.target.value })
-                  }
-                  className="w-20"
-                />
-                <Input
-                  placeholder="Phone Number"
-                  value={formData.phone_number}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone_number: e.target.value })
-                  }
-                />
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Full Name</Label>
+                  <Input
+                    placeholder="e.g. Dr. Jane Smith"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="rounded-xl border-gray-200 h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Secure Password</Label>
+                  <Input
+                    placeholder="••••••••"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="rounded-xl border-gray-200 h-11"
+                  />
+                </div>
               </div>
-              <Input
-                placeholder="Password"
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Organization Name"
-                value={formData.organizationName}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    organizationName: e.target.value,
-                  })
-                }
-              />
-              <Input
-                placeholder="Location Line 1"
-                value={formData.location.line1}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    location: { ...formData.location, line1: e.target.value },
-                  })
-                }
-              />
-              <Input
-                placeholder="Location Line 2"
-                value={formData.location.line2}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    location: { ...formData.location, line2: e.target.value },
-                  })
-                }
-              />
-              <Input
-                placeholder="Location Line 3"
-                value={formData.location.line3}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    location: { ...formData.location, line3: e.target.value },
-                  })
-                }
-              />
 
-              {/* Permissions */}
-              <div className="mt-3">
-                <p className="text-sm font-medium mb-2">Permissions:</p>
-                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border p-2 rounded-md">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Phone Connectivity</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="+91"
+                    value={formData.phone_country}
+                    onChange={(e) => setFormData({ ...formData, phone_country: e.target.value })}
+                    className="w-24 rounded-xl border-gray-200 h-11 text-center"
+                  />
+                  <Input
+                    placeholder="Primary Mobile Number"
+                    value={formData.phone_number}
+                    onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    className="flex-1 rounded-xl border-gray-200 h-11"
+                  />
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white/40 px-3 text-xs font-extrabold text-gray-400 uppercase tracking-widest">Organization Details</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Clinical Entity Name</Label>
+                  <Input
+                    placeholder="e.g. Apollo Healthcare"
+                    value={formData.organizationName}
+                    onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
+                    className="rounded-xl border-gray-200 h-11"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    placeholder="Street Address"
+                    value={formData.location.line1}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, line1: e.target.value } })}
+                    className="rounded-xl border-gray-200 h-11"
+                  />
+                  <Input
+                    placeholder="City / Region"
+                    value={formData.location.line2}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, line2: e.target.value } })}
+                    className="rounded-xl border-gray-200 h-11"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Assigned Permissions</p>
+                <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto border border-gray-100 p-4 rounded-2xl bg-white/30">
                   {permissions.map((perm) => (
-                    <label
-                      key={perm}
-                      className="flex items-center space-x-2 text-sm"
-                    >
+                    <label key={perm} className="flex items-center space-x-3 text-sm font-medium text-gray-700 cursor-pointer hover:text-primary transition-colors">
                       <Checkbox
                         checked={selectedPermissions.includes(perm)}
                         onCheckedChange={(checked) => {
                           setSelectedPermissions((prev) =>
-                            checked
-                              ? [...prev, perm]
-                              : prev.filter((p) => p !== perm)
+                            checked ? [...prev, perm] : prev.filter((p) => p !== perm)
                           );
                         }}
+                        className="rounded-md border-gray-300"
                       />
                       <span>{perm}</span>
                     </label>
@@ -335,11 +352,13 @@ const EA_ClusterHeads = () => {
               </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <DialogFooter className="p-8 bg-gray-50/50 border-t border-gray-100">
+              <Button variant="ghost" onClick={() => setDialogOpen(false)} className="rounded-xl font-bold h-12 px-6">
                 Cancel
               </Button>
-              <Button onClick={handleSubmit}>Create</Button>
+              <Button onClick={handleSubmit} className="gradient-primary text-white rounded-xl h-12 px-10 font-bold shadow-lg">
+                Finalize & Send OTP
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -347,124 +366,133 @@ const EA_ClusterHeads = () => {
 
       {/* OTP Verification */}
       <Dialog open={verifyDialog} onOpenChange={setVerifyDialog}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="glass-panel border-none shadow-2xl sm:max-w-[400px] rounded-[30px] p-8 text-center">
           <DialogHeader>
-            <DialogTitle>Verify OTP</DialogTitle>
+            <DialogTitle className="text-3xl font-extrabold text-[#2d3748]">Verify Identity</DialogTitle>
+            <p className="text-gray-500 mt-2 font-medium">Enter the secure code sent to {createdPhone}</p>
           </DialogHeader>
-          <div className="grid gap-3 py-4">
+          <div className="py-8">
             <Input
-              placeholder="Enter OTP Code"
+              placeholder="0 0 0 0 0 0"
               value={otpCode}
               onChange={(e) => setOtpCode(e.target.value)}
+              className="text-center text-3xl font-bold tracking-[1em] h-20 rounded-[20px] border-2 border-primary/20 focus:border-primary/50"
+              maxLength={6}
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setVerifyDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleVerify}>
-              <KeyRound className="h-4 w-4 mr-1" /> Verify
-            </Button>
-          </DialogFooter>
+          <Button onClick={handleVerify} className="w-full gradient-primary text-white rounded-2xl h-14 text-lg font-bold shadow-xl active:scale-95">
+            <KeyRound className="h-6 w-6 mr-3" /> Activate Account
+          </Button>
+          <div className="mt-6">
+            <button
+              onClick={handleResendOtp}
+              disabled={timer > 0}
+              className={cn(
+                "text-sm font-bold transition-all",
+                timer > 0 ? "text-gray-400 cursor-not-allowed" : "text-primary hover:underline"
+              )}
+            >
+              {timer > 0 ? `Resend OTP in ${timer}s` : "Didn't receive code? Resend OTP"}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Search */}
-      <div className="flex justify-end">
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search cluster heads..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+      {/* Search & Listing */}
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <div className="relative w-80 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder="Search by name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-12 rounded-2xl border-gray-200 h-12 shadow-sm focus:shadow-md transition-all"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Cluster Heads</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Loading cluster heads...
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No cluster heads found
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left py-3 px-4 font-semibold">Name</th>
-                    <th className="text-left py-3 px-4 font-semibold">Phone</th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Organization
-                    </th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Location
-                    </th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((c) => (
-                    <tr
-                      key={c._id}
-                      className="border-b hover:bg-muted/40 transition-colors"
-                    >
-                      <td className="py-3 px-4 font-medium">{c.name}</td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Phone className="h-4 w-4" /> +{c.phone_number?.join(" ")}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {c.organization?.organizationName || "—"}
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 shrink-0" />
-                          <span>
-                            {[
-                              c.organization?.location?.line1,
-                              c.organization?.location?.line2,
-                              c.organization?.location?.line3,
-                            ]
-                              .filter(Boolean)
-                              .join(", ")}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(c._id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </td>
+        <Card className="glass-panel border-none shadow-xl overflow-hidden">
+          <CardHeader className="bg-white/30 border-b border-white/50 pb-6">
+            <CardTitle className="text-2xl font-bold text-[#2d3748]">Network Cluster Leads</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <RefreshCcw className="h-10 w-10 animate-spin text-primary opacity-50" />
+                <p className="text-gray-500 font-bold mt-4 animate-pulse">Synchronizing Cluster Data...</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-20 text-gray-400 font-bold text-lg">
+                No cluster heads found matching your criteria.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-[#f8fafc] text-gray-500 uppercase text-[11px] font-extrabold tracking-widest border-b">
+                    <tr>
+                      <th className="px-6 py-4">Lead Profile</th>
+                      <th className="px-6 py-4">Connectivity</th>
+                      <th className="px-6 py-4">Organization</th>
+                      <th className="px-6 py-4">Location</th>
+                      <th className="px-6 py-4 text-right">Management</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filtered.map((c) => (
+                      <tr key={c._id} className="hover:bg-white/40 transition-colors group">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                              {c.name.charAt(0)}
+                            </div>
+                            <span className="font-bold text-[#2d3748] text-base">{c.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-gray-600 font-bold">
+                            <Phone className="h-4 w-4 text-primary/50" /> 
+                            <span>+{c.phone_number?.join(" ")}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 font-bold text-[#2d3748]">
+                          {c.organization?.organizationName || "—"}
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-gray-500 font-medium max-w-[200px]">
+                            <MapPin className="h-4 w-4 shrink-0 text-gray-300" />
+                            <span className="truncate">
+                              {[
+                                c.organization?.location?.line1,
+                                c.organization?.location?.line2,
+                              ].filter(Boolean).join(", ")}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary rounded-xl transition-all">
+                              <Edit className="h-5 w-5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(c._id)}
+                              className="hover:bg-destructive/10 hover:text-destructive rounded-xl transition-all"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

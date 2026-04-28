@@ -13,12 +13,11 @@ export const createNurse = async (payload: any) => {
 };
 
 export const deleteNurse = async (id: string) => {
-  return apiRequest(`/api/delete/nurse/${id}`, { method: "DELETE" });
+  return apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
 };
 
-
 export const updateNurse = (id: string, data: any) =>
-  apiRequest(`/api/update/nurse/${id}`, {
+  apiRequest(`/update/user/${id}`, {
     method: "PUT",
     data
   });

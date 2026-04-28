@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Activity, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,7 @@ const LoginPage = () => {
   const [forgotOtp, setForgotOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotTimer, setForgotTimer] = useState(0);
 
   useEffect(() => {
     if (timer > 0) {
@@ -63,6 +65,13 @@ const LoginPage = () => {
       return () => clearInterval(interval);
     }
   }, [timer]);
+
+  useEffect(() => {
+    if (forgotTimer > 0) {
+      const interval = setInterval(() => setForgotTimer((t) => t - 1), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [forgotTimer]);
 
   // ============================
   // Step 1: Send OTP
@@ -215,6 +224,7 @@ const LoginPage = () => {
       const response = await requestPasswordResetOtp(["91", forgotPhone]);
       toast({ title: "OTP Sent", description: response?.message || "Check your phone for the reset OTP." });
       setForgotPasswordStep("reset");
+      setForgotTimer(30);
     } catch (error: any) {
       toast({ title: "Failed to send OTP", description: getErrorMessage(error), variant: "destructive" });
     } finally {
@@ -397,6 +407,20 @@ const LoginPage = () => {
               >
                 ← Back to Phone Number
               </button>
+
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={timer > 0 || sendingOtp}
+                  className={cn(
+                    "text-xs font-bold transition-all",
+                    timer > 0 ? "text-gray-400 cursor-not-allowed" : "text-[#eb4e4e] hover:underline"
+                  )}
+                >
+                  {timer > 0 ? `Resend OTP in ${timer}s` : "Didn't receive code? Resend OTP"}
+                </button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -492,6 +516,19 @@ const LoginPage = () => {
                 >
                   {forgotLoading ? "Resetting..." : "Reset Password"}
                 </Button>
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={handleForgotRequestOtp}
+                    disabled={forgotTimer > 0 || forgotLoading}
+                    className={cn(
+                      "text-xs font-bold transition-all",
+                      forgotTimer > 0 ? "text-gray-400 cursor-not-allowed" : "text-[#eb4e4e] hover:underline"
+                    )}
+                  >
+                    {forgotTimer > 0 ? `Resend OTP in ${forgotTimer}s` : "Didn't receive code? Resend OTP"}
+                  </button>
+                </div>
               </div>
             )}
           </div>

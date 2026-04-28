@@ -65,6 +65,14 @@ export const signinNonUser = async (phone_number: string[]): Promise<AuthRespons
     withCredentials: true,
   });
 };
+export const resendOtp = async (phone_number: string[]): Promise<AuthResponse> => {
+  return apiRequest(API_ENDPOINTS.AUTH.RESEND_OTP, {
+    method: "POST",
+    data: { phone_number },
+    requiresAuth: false,
+    withCredentials: true,
+  });
+};
 
 // Password Reset - Step 1: Request OTP
 export const requestPasswordResetOtp = async (phone_number: string[]): Promise<AuthResponse> => {

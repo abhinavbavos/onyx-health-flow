@@ -17,6 +17,8 @@ import {
 } from "@/services/nurse.service";
 import { getUserPermissions } from "@/services/permission.service";
 import { apiRequest } from "@/lib/api-request";
+import { resendOtp } from "@/services/auth.service";
+import { cn } from "@/lib/utils";
 
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
@@ -131,8 +133,9 @@ const CH_Nurses = () => {
       if (chUserId) {
         try {
           const perms = await getUserPermissions(chUserId);
+          // Filter to only show relevant permissions for a nurse, or just default to empty
           setPermissionsNew(perms);
-          setSelectedPermissionsNew(perms); // auto-select all by default
+          setSelectedPermissionsNew([]); // auto-select NONE by default to prevent 403 Forbidden
         } catch (e) {
           console.error("Error fetching cluster-head permissions", e);
         }
@@ -207,6 +210,7 @@ const CH_Nurses = () => {
       await createNurse(payload);
       setPendingNursePhone({ phone_country, phone_number });
       setAddStep("verify");
+      setResendTimer(30);
       toast({ title: "OTP sent to nurse phone number" });
     } catch (err: any) {
       console.error("Error creating nurse:", err);
@@ -520,6 +524,18 @@ const CH_Nurses = () => {
                   value={addOtp}
                   onChange={(e) => setAddOtp(e.target.value)}
                 />
+                <div className="mt-2 text-center">
+                  <button
+                    onClick={handleResendOtp}
+                    disabled={resendTimer > 0}
+                    className={cn(
+                      "text-xs font-bold transition-all",
+                      resendTimer > 0 ? "text-gray-400 cursor-not-allowed" : "text-primary hover:underline"
+                    )}
+                  >
+                    {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : "Didn't receive code? Resend OTP"}
+                  </button>
+                </div>
               </div>
             )}
 
