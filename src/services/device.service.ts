@@ -12,4 +12,4 @@ export const createDevice = (data: any) =>
   });
 
 export const deleteDevice = (id: string) =>
-  apiRequest(`/api/delete/device/${id}`, { method: "DELETE" });
+  apiRequest(`/delete/profile/${id}`, { method: "DELETE" });

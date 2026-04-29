@@ -25,10 +25,10 @@ import {
 } from "lucide-react";
 import {
   listTechnicians,
-  // createTechnician,
   deleteTechnician,
   sendTechnicianOTP,
   verifyTechnicianOTP,
+  updateTechnician,
 } from "@/services/technician.service";
 import { listPermissions } from "@/services/permission.service";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,6 +65,19 @@ const EA_Technicians = () => {
     password: "",
     country: "India",
   });
+
+  // Edit state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingTech, setEditingTech] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    phone_country: "91",
+    phone_number: "",
+    country: "India",
+    status: "Active",
+  });
+  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   /* ================================
      Fetch All Technicians
@@ -308,13 +321,9 @@ const EA_Technicians = () => {
     );
   };
 
-  /* ================================
-     Reset Dialog on Close
-  ================================ */
   const handleDialogClose = (open: boolean) => {
     setDialogOpen(open);
     if (!open) {
-      // Reset when closing
       setStep("form");
       setOtp("");
       setFormData({
@@ -326,6 +335,55 @@ const EA_Technicians = () => {
       });
       setSelectedPermissions([]);
     }
+  };
+
+  /* ================================
+     Edit Logic
+  ================================ */
+  const handleEdit = (tech: any) => {
+    setEditingTech(tech);
+    setEditForm({
+      name: tech.name,
+      phone_country: tech.phone_number?.[0] || "91",
+      phone_number: tech.phone_number?.[1] || "",
+      country: tech.country,
+      status: tech.status || "Active",
+    });
+    setEditPermissions(tech.permissions || []);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingTech) return;
+    setSavingEdit(true);
+    try {
+      const payload = {
+        name: editForm.name,
+        phone_number: [editForm.phone_country, editForm.phone_number],
+        country: editForm.country,
+        status: editForm.status,
+        permissions: editPermissions,
+      };
+
+      await updateTechnician(editingTech._id || editingTech.id, payload);
+      toast({ title: "Technician updated successfully" });
+      setEditDialogOpen(false);
+      fetchTechnicians();
+    } catch (err: any) {
+      toast({
+        title: "Failed to update technician",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const toggleEditPermission = (perm: string) => {
+    setEditPermissions((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
   };
 
   /* ================================
@@ -583,7 +641,11 @@ const EA_Technicians = () => {
                       </td>
                       <td className="py-3 px-4">{t.country}</td>
                       <td className="py-3 px-4 flex gap-2">
-                        <Button variant="ghost" size="icon">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(t)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -602,6 +664,82 @@ const EA_Technicians = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Technician Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Edit Technician</DialogTitle>
+            <DialogDescription>
+              Update technician profile and permissions
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label>Full Name *</Label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label>Phone Number *</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Code"
+                  className="w-20"
+                  value={editForm.phone_country}
+                  onChange={(e) => setEditForm({ ...editForm, phone_country: e.target.value })}
+                />
+                <Input
+                  placeholder="Phone Number"
+                  value={editForm.phone_number}
+                  onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Country</Label>
+              <Input
+                value={editForm.country}
+                onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
+              />
+            </div>
+
+            {/* Permissions */}
+            <div className="border rounded-md p-3 bg-muted/30">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <p className="font-medium text-sm">Update Permissions</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto">
+                {permissions.map((perm) => (
+                  <label key={perm} className="flex items-center space-x-2 text-sm">
+                    <Checkbox
+                      checked={editPermissions.includes(perm)}
+                      onCheckedChange={() => toggleEditPermission(perm)}
+                    />
+                    <span>{perm}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={savingEdit}>
+              {savingEdit ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

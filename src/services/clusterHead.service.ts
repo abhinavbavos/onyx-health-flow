@@ -21,5 +21,12 @@ export const verifyClusterHead = async (payload: any) => {
 };
 
 export const deleteClusterHead = async (id: string) => {
-  return apiRequest(`/api/delete/cluster-head/${id}`, { method: "DELETE" });
+  return apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
+};
+
+export const updateClusterHead = async (id: string, payload: any) => {
+  return apiRequest(`/update/profile/${id}`, {
+    method: "PUT",
+    data: payload,
+  });
 };

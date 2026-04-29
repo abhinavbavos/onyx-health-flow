@@ -45,7 +45,8 @@ interface Nurse {
 }
 
 interface Organization {
-  id: string;
+  id?: string;
+  _id?: string;
   organizationName: string;
   devices?: { _id: string; name: string; deviceCode: string }[];
   userId?: { _id: string; name: string };
@@ -176,13 +177,11 @@ const EA_Nurses = () => {
       country,
     } = formData;
 
-    if (!name || !phone_number || !password || !orgId || devices.length === 0) {
-      toast({
-        title: "Please fill all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!name) { toast({ title: "Name is required", variant: "destructive" }); return; }
+    if (!phone_number) { toast({ title: "Phone number is required", variant: "destructive" }); return; }
+    if (!password) { toast({ title: "Password is required", variant: "destructive" }); return; }
+    if (!orgId) { toast({ title: "Please select an organization", variant: "destructive" }); return; }
+    if (devices.length === 0) { toast({ title: "Please select at least one device", variant: "destructive" }); return; }
 
     try {
       const payload = {
@@ -255,18 +254,10 @@ const EA_Nurses = () => {
     }
   };
 
-  interface Organization {
-    id: string;
-    _id: string;
-    organizationName: string;
-    devices?: { _id: string; name: string; deviceCode: string }[];
-    userId?: { _id: string }; // Added userId property
-  }
-  
   const selectedOrg: Organization =
     organizations.find(
       (o) => o.id === formData.orgId || o._id === formData.orgId
-    ) || { id: "", _id: "", organizationName: "", devices: [] };
+    ) || { organizationName: "", devices: [] };
 
   // ================================
   // UI
@@ -350,7 +341,7 @@ const EA_Nurses = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
+                      <SelectItem key={org.id || org._id} value={org.id || org._id || ""}>
                         {org.organizationName}
                       </SelectItem>
                     ))}

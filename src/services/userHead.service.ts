@@ -15,4 +15,10 @@ export const verifyUserHead = (data: { otp: string }) =>
   });
 
 export const deleteUserHead = (id: string) =>
-  apiRequest(`/api/delete/user-head/${id}`, { method: "DELETE" });
+  apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
+
+export const updateUserHead = (id: string, data: any) =>
+  apiRequest(`/update/profile/${id}`, {
+    method: "PUT",
+    data,
+  });

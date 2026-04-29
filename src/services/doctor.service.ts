@@ -13,6 +13,13 @@ export const createDoctor = async (payload: any) => {
 };
 
 export const deleteDoctor = async (id: string) => {
-  return apiRequest(`/api/delete/doctor/${id}`, { method: "DELETE" });
+  return apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
+};
+
+export const updateDoctor = async (id: string, payload: any) => {
+  return apiRequest(`/update/profile/${id}`, {
+    method: "PUT",
+    data: payload,
+  });
 };
     
