@@ -126,6 +126,7 @@ const EA_Nurses = () => {
   useEffect(() => {
     fetchNurses();
     fetchOrganizations();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ================================
