@@ -45,8 +45,12 @@ const EA_Organizations = () => {
       try {
         const data = await listOrganizations();
         const orgList = data.organizations || data;
-        setOrgs(orgList);
-        setFilteredOrgs(orgList);
+        const normalized = (orgList || []).map((org: any) => ({
+          ...org,
+          id: org._id || org.id,
+        }));
+        setOrgs(normalized);
+        setFilteredOrgs(normalized);
       } catch (err) {
         console.error(err);
         toast({
@@ -82,7 +86,11 @@ const EA_Organizations = () => {
         toast({ title: "Edit functionality not yet implemented" });
       } else {
         const newOrg = await createOrganization(formData);
-        setOrgs((prev) => [...prev, newOrg]);
+        const normalizedNewOrg = {
+          ...newOrg,
+          id: newOrg._id || newOrg.id,
+        };
+        setOrgs((prev) => [...prev, normalizedNewOrg]);
         toast({ title: "Organization created successfully" });
       }
 

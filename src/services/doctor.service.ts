@@ -17,7 +17,7 @@ export const deleteDoctor = async (id: string) => {
 };
 
 export const updateDoctor = async (id: string, payload: any) => {
-  return apiRequest(`/update/profile/${id}`, {
+  return apiRequest(`/update/user/${id}`, {
     method: "PUT",
     data: payload,
   });

@@ -25,7 +25,7 @@ export const deleteClusterHead = async (id: string) => {
 };
 
 export const updateClusterHead = async (id: string, payload: any) => {
-  return apiRequest(`/update/profile/${id}`, {
+  return apiRequest(`/update/user/${id}`, {
     method: "PUT",
     data: payload,
   });

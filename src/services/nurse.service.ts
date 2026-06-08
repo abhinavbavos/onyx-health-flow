@@ -17,7 +17,7 @@ export const deleteNurse = async (id: string) => {
 };
 
 export const updateNurse = (id: string, data: any) =>
-  apiRequest(`/update/profile/${id}`, {
+  apiRequest(`/update/user/${id}`, {
     method: "PUT",
     data
   });

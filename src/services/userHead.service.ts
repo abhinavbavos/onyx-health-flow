@@ -18,7 +18,7 @@ export const deleteUserHead = (id: string) =>
   apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
 
 export const updateUserHead = (id: string, data: any) =>
-  apiRequest(`/update/profile/${id}`, {
+  apiRequest(`/update/user/${id}`, {
     method: "PUT",
     data,
   });

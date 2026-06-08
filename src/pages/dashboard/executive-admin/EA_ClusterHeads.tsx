@@ -35,6 +35,7 @@ import {
   verifyClusterHead,
   deleteClusterHead,
 } from "@/services/clusterHead.service";
+import { listOrganizations } from "@/services/organization.service";
 import { getPermissions } from "@/services/permission.service";
 import { resendOtp } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
@@ -104,10 +105,44 @@ const EA_ClusterHeads = () => {
   const fetchClusterHeads = async () => {
     setLoading(true);
     try {
-      const data = await listClusterHeads();
-      const clusterList = data.clusters || [];
-      setClusterHeads(clusterList);
-      setFiltered(clusterList);
+      const [clusterData, orgData] = await Promise.all([
+        listClusterHeads(),
+        listOrganizations().catch((err) => {
+          console.error("Failed to load organizations for cross-check:", err);
+          return [];
+        })
+      ]);
+
+      const clusterList = clusterData.clusters || [];
+      const orgList = Array.isArray(orgData?.organizations)
+        ? orgData.organizations
+        : Array.isArray(orgData)
+        ? orgData
+        : [];
+
+      const enrichedClusters = clusterList.map((c: any) => {
+        // Find if this cluster head has an organization in the organizations list
+        const matchedOrg = orgList.find((org: any) => {
+          const orgUserId = org.userId?._id || org.userId;
+          return orgUserId === c._id;
+        });
+
+        if (matchedOrg) {
+          return {
+            ...c,
+            organization: {
+              organizationName: matchedOrg.organizationName,
+              organizationCode: matchedOrg.organizationCode,
+              location: matchedOrg.location,
+              status: matchedOrg.status
+            }
+          };
+        }
+        return c;
+      });
+
+      setClusterHeads(enrichedClusters);
+      setFiltered(enrichedClusters);
     } catch (err) {
       console.error(err);
       toast({ title: "Failed to load cluster heads", variant: "destructive" });
