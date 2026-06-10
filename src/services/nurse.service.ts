@@ -13,7 +13,25 @@ export const createNurse = async (payload: any) => {
 };
 
 export const deleteNurse = async (id: string) => {
-  return apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
+  return apiRequest("/api/inactive/all/entity/toggle-status", {
+    method: "POST",
+    data: {
+      targetId: id,
+      targetType: "user",
+      status: "Inactive",
+    },
+  });
+};
+
+export const toggleNurseStatus = async (id: string, status: string) => {
+  return apiRequest("/api/inactive/all/entity/toggle-status", {
+    method: "POST",
+    data: {
+      targetId: id,
+      targetType: "user",
+      status,
+    },
+  });
 };
 
 export const updateNurse = (id: string, data: any) =>

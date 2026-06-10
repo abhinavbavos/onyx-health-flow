@@ -14,11 +14,12 @@ import {
   createNurse,
   deleteNurse,
   updateNurse,
+  toggleNurseStatus,
 } from "@/services/nurse.service";
 import { getUserPermissions } from "@/services/permission.service";
 import { apiRequest } from "@/lib/api-request";
-import { resendOtp } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
@@ -66,10 +67,6 @@ const CH_Nurses = () => {
     { _id: string; name: string; deviceCode: string }[]
   >([]);
 
-  const [clusterHeadUserId, setClusterHeadUserId] = useState<string | null>(
-    null
-  );
-
   // Permissions for NEW nurse (based on cluster-head)
   const [permissionsNew, setPermissionsNew] = useState<string[]>([]);
   const [selectedPermissionsNew, setSelectedPermissionsNew] = useState<
@@ -96,7 +93,7 @@ const CH_Nurses = () => {
 
   // ── Edit Nurse dialog state ──
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingNurse, setEditingNurse] = useState<any | null>(null);
+  const [editingNurse, setEditingNurse] = useState<any>(null);
   const [editForm, setEditForm] = useState({
     phone_country: "91",
     phone_number: "",
@@ -127,7 +124,6 @@ const CH_Nurses = () => {
 
       setNurses(orgNurses);
       setOrgDevices(devices);
-      setClusterHeadUserId(chUserId);
 
       // Fetch permissions for NEW nurse from Cluster Head userId
       if (chUserId) {
@@ -155,21 +151,29 @@ const CH_Nurses = () => {
 
   useEffect(() => {
     fetchOrgAndNurses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ───────────────────────── Filter Logic ─────────────────────────
-  const filteredNurses = useMemo(() => {
-    if (!searchTerm.trim()) return nurses;
+  const [statusFilter, setStatusFilter] = useState("all");
 
-    const q = searchTerm.toLowerCase();
-    return nurses.filter((n: any) => {
-      return (
-        n.name?.toLowerCase().includes(q) ||
-        n.phone_number?.join("").includes(q) ||
-        n.country?.toLowerCase().includes(q)
-      );
-    });
-  }, [searchTerm, nurses]);
+  const filteredNurses = useMemo(() => {
+    let list = nurses;
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      list = list.filter((n: any) => {
+        return (
+          n.name?.toLowerCase().includes(q) ||
+          n.phone_number?.join("").includes(q) ||
+          n.country?.toLowerCase().includes(q)
+        );
+      });
+    }
+    if (statusFilter !== "all") {
+      list = list.filter((n: any) => (n.status || "Active") === statusFilter);
+    }
+    return list;
+  }, [searchTerm, statusFilter, nurses]);
 
   // ───────────────────────── Add Nurse: Step 1 (send OTP) ─────────────────────────
   const handleAddNurseSubmit = async () => {
@@ -338,17 +342,28 @@ const CH_Nurses = () => {
     }
   };
 
-  // ───────────────────────── Delete Nurse ─────────────────────────
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this nurse?")) return;
+  // ───────────────────────── Toggle Nurse Status ─────────────────────────
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
+
+  const handleToggleStatus = (id: string, currentStatus?: string) => {
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
     try {
-      await deleteNurse(id);
-      toast({ title: "Nurse deleted successfully" });
+      await toggleNurseStatus(id, newStatus);
+      toast({ title: `Nurse status updated to ${newStatus}` });
+      setConfirmOpen(false);
       fetchOrgAndNurses();
     } catch (err: any) {
-      console.error("Error deleting nurse:", err);
+      console.error("Error toggling nurse status:", err);
       toast({
-        title: "Failed to delete nurse",
+        title: "Failed to update status",
         description: err.message || "Something went wrong.",
         variant: "destructive",
       });
@@ -644,8 +659,22 @@ const CH_Nurses = () => {
                 <tr className="border-b bg-muted/40">
                   <th className="text-left py-3 px-4 font-semibold">Name</th>
                   <th className="text-left py-3 px-4 font-semibold">Phone</th>
-                  <th className="text-left py-3 px-4 font-semibold">Country</th>
-                  <th className="text-left py-3 px-4 font-semibold">Status</th>
+                  <th className="text-left py-3 px-4 font-semibold">Assigned Devices</th>
+                  <th className="text-left py-3 px-4 font-semibold">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(val) => setStatusFilter(val)}
+                    >
+                      <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted p-0 pr-2 font-semibold text-sm text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Status: All</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </th>
                   <th className="text-left py-3 px-4 font-semibold">
                     Date Created
                   </th>
@@ -667,7 +696,22 @@ const CH_Nurses = () => {
                         ? `+${n.phone_number.join(" ")}`
                         : "—"}
                     </td>
-                    <td className="py-3 px-4">{n.country || "—"}</td>
+                    <td className="py-3 px-4">
+                      {n.devices && n.devices.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {n.devices.map((d: any) => (
+                            <span
+                              key={d._id}
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                            >
+                              {d.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </td>
                     <td className="py-3 px-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -686,25 +730,22 @@ const CH_Nurses = () => {
                           ).toLocaleString()
                         : "—"}
                     </td>
-                    <td className="py-3 px-4 flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditDialog(n)}
-                        title="Edit nurse"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          handleDelete(n._id || n.id || "")
-                        }
-                        title="Delete nurse"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                    <td className="py-3 px-4 flex items-center gap-3">
+                      {n.status !== "Inactive" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditDialog(n)}
+                          title="Edit nurse"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Switch
+                        checked={n.status !== "Inactive"}
+                        onCheckedChange={() => handleToggleStatus(n._id || n.id || "", n.status)}
+                        title={n.status === "Inactive" ? "Activate" : "Deactivate"}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -858,6 +899,29 @@ const CH_Nurses = () => {
               Cancel
             </Button>
             <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Confirm Status Change Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to set this nurse to{" "}
+              <span className="font-bold text-primary">
+                {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+              </span>
+              ?
+            </p>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeToggleStatus}>
+              Confirm
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

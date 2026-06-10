@@ -30,7 +30,10 @@ export const verifyTechnicianOTP = async (payload: { otp: string }) => {
 };
 
 export const deleteTechnician = async (id: string) => {
-  return apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
+  return apiRequest(`/update/user/${id}`, {
+    method: "PUT",
+    data: { status: "Inactive" },
+  });
 };
 
 export const updateTechnician = async (id: string, payload: any) => {

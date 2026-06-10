@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -26,29 +27,36 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Search, Edit, Trash2, HeartPulse, Phone } from "lucide-react";
-import { createNurse, deleteNurse, listNurses } from "@/services/nurse.service";
+import { createNurse, deleteNurse, listNurses, updateNurse, toggleNurseStatus } from "@/services/nurse.service";
 import { listOrganizations } from "@/services/organization.service";
 import { getUserPermissions } from "@/services/permission.service";
 import { apiRequest } from "@/lib/api-request";
+import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 interface Nurse {
   _id?: string;
   id?: string;
   name: string;
   phone_number: string[];
-  country: string;
+  country?: string;
   organizationName?: string;
   status: string;
   organization?: {
     _id?: string;
     organizationName?: string;
   };
+  devices?: {
+    _id: string;
+    name: string;
+  }[];
 }
 
 interface Organization {
   id?: string;
   _id?: string;
   organizationName: string;
+  organizationCode?: string;
   devices?: { _id: string; name: string; deviceCode: string }[];
   userId?: { _id: string; name: string };
 }
@@ -80,6 +88,123 @@ const EA_Nurses = () => {
     orgId: "",
     devices: [] as string[],
   });
+
+  // ====== Edit States ======
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingNurse, setEditingNurse] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    phone_country: "91",
+    phone_number: "",
+    country: "India",
+    orgId: "",
+    devices: [] as string[],
+    status: "Active",
+  });
+  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [availableDevices, setAvailableDevices] = useState<any[]>([]);
+  const [availablePermissions, setAvailablePermissions] = useState<string[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const handleEdit = async (nurse: any) => {
+    setEditingNurse(nurse);
+    const orgId = nurse.orgId || nurse.organization?._id || nurse.organization?.id || "";
+    setEditForm({
+      name: nurse.name,
+      phone_country: nurse.phone_number?.[0] || "91",
+      phone_number: nurse.phone_number?.[1] || "",
+      country: nurse.country || "India",
+      orgId: orgId,
+      devices: nurse.devices || [],
+      status: nurse.status || "Active",
+    });
+    setEditPermissions(nurse.permissions || []);
+
+    const selectedOrg = organizations.find((o) => o.id === orgId || o._id === orgId);
+    setAvailableDevices(selectedOrg?.devices || []);
+
+    if (selectedOrg?.userId?._id) {
+      try {
+        const perms = await getUserPermissions(selectedOrg.userId._id);
+        setAvailablePermissions(perms);
+      } catch (err) {
+        console.error("Failed to load permissions:", err);
+      }
+    } else {
+      setAvailablePermissions([]);
+    }
+
+    setEditDialogOpen(true);
+  };
+
+  const handleOrgSelectEdit = async (orgId: string) => {
+    setEditForm((prev) => ({ ...prev, orgId, devices: [] }));
+    setEditPermissions([]);
+    setAvailableDevices([]);
+    setAvailablePermissions([]);
+
+    const org = organizations.find((o) => o.id === orgId || o._id === orgId);
+    setAvailableDevices(org?.devices || []);
+
+    if (!org || !org.userId?._id) return;
+
+    try {
+      const perms = await getUserPermissions(org.userId._id);
+      setAvailablePermissions(perms);
+      setEditPermissions(perms); // auto-select all
+    } catch (err) {
+      console.error("Failed to load permissions:", err);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingNurse) return;
+    if (!editForm.name) { toast({ title: "Name is required", variant: "destructive" }); return; }
+    if (!editForm.phone_number) { toast({ title: "Phone number is required", variant: "destructive" }); return; }
+    if (!editForm.orgId) { toast({ title: "Please select an organization", variant: "destructive" }); return; }
+    if (editForm.devices.length === 0) { toast({ title: "Please select at least one device", variant: "destructive" }); return; }
+
+    setSavingEdit(true);
+    try {
+      const payload = {
+        name: editForm.name,
+        phone_number: [editForm.phone_country, editForm.phone_number],
+        country: editForm.country,
+        orgId: editForm.orgId,
+        devices: editForm.devices,
+        permissions: editPermissions,
+        status: editForm.status,
+      };
+
+      await updateNurse(editingNurse._id || editingNurse.id, payload);
+      toast({ title: "Nurse updated successfully" });
+      setEditDialogOpen(false);
+      fetchNurses();
+    } catch (err: any) {
+      toast({
+        title: "Failed to update nurse",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const toggleEditPermission = (perm: string) => {
+    setEditPermissions((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
+  };
+
+  const toggleEditDevice = (id: string) => {
+    setEditForm((prev) => {
+      const devices = prev.devices.includes(id)
+        ? prev.devices.filter((d) => d !== id)
+        : [...prev.devices, id];
+      return { ...prev, devices };
+    });
+  };
 
   // ================================
   // Fetch nurses + organizations
@@ -131,18 +256,22 @@ const EA_Nurses = () => {
   }, []);
 
   // ================================
-  // Search
+  // Search & Status Filter
   // ================================
+  const [statusFilter, setStatusFilter] = useState("all");
+
   useEffect(() => {
-    if (search.trim() === "") setFiltered(nurses);
-    else {
-      setFiltered(
-        nurses.filter((n) =>
-          n.name.toLowerCase().includes(search.toLowerCase())
-        )
+    let list = nurses;
+    if (search.trim() !== "") {
+      list = list.filter((n) =>
+        n.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-  }, [search, nurses]);
+    if (statusFilter !== "all") {
+      list = list.filter((n) => (n.status || "Active") === statusFilter);
+    }
+    setFiltered(list);
+  }, [search, statusFilter, nurses]);
 
   // ================================
   // When organization changes → get permissions
@@ -186,12 +315,13 @@ const EA_Nurses = () => {
     if (devices.length === 0) { toast({ title: "Please select at least one device", variant: "destructive" }); return; }
 
     try {
+      const selectedOrgCode = selectedOrg?.organizationCode || orgId;
       const payload = {
         phone_number: [phone_country, phone_number],
         password,
         name,
         country,
-        orgId,
+        orgId: selectedOrgCode,
         permissions: selectedPermissions,
         devices,
       };
@@ -243,16 +373,27 @@ const EA_Nurses = () => {
   };
 
   // ================================
-  // Delete Nurse
+  // Toggle Nurse Status
   // ================================
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this nurse?")) return;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
+
+  const handleToggleStatus = (id: string, currentStatus?: string) => {
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
     try {
-      await deleteNurse(id);
-      toast({ title: "Nurse deleted successfully" });
+      await toggleNurseStatus(id, newStatus);
+      toast({ title: `Nurse status updated to ${newStatus}` });
+      setConfirmOpen(false);
       fetchNurses();
-    } catch (err) {
-      toast({ title: "Failed to delete nurse", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Failed to update nurse status", variant: "destructive" });
     }
   };
 
@@ -285,15 +426,15 @@ const EA_Nurses = () => {
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+            <DialogHeader className="p-6 border-b shrink-0">
               <DialogTitle>
                 {step === "form" ? "Add Nurse" : "Verify OTP"}
               </DialogTitle>
             </DialogHeader>
 
             {step === "form" ? (
-              <div className="grid gap-4 py-4">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <Input
                   placeholder="Full Name"
                   value={formData.name}
@@ -421,7 +562,7 @@ const EA_Nurses = () => {
                 )}
               </div>
             ) : (
-              <div className="grid gap-4 py-4">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <p className="text-muted-foreground text-sm">
                   Enter the OTP sent to +{pendingNurse?.phone_country}{" "}
                   {pendingNurse?.phone_number}
@@ -434,7 +575,7 @@ const EA_Nurses = () => {
               </div>
             )}
 
-            <DialogFooter>
+            <DialogFooter className="p-6 border-t bg-muted/30 shrink-0">
               {step === "form" ? (
                 <>
                   <Button
@@ -463,6 +604,156 @@ const EA_Nurses = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Edit Nurse Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b shrink-0">
+            <DialogTitle>Edit Nurse</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="space-y-1">
+              <Label>Full Name</Label>
+              <Input
+                placeholder="Full Name"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Phone Connectivity</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Country Code"
+                  value={editForm.phone_country}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      phone_country: e.target.value,
+                    })
+                  }
+                  className="w-20"
+                />
+                <Input
+                  placeholder="Phone Number"
+                  value={editForm.phone_number}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      phone_number: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Country</Label>
+              <Input
+                placeholder="Country"
+                value={editForm.country}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, country: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Status</Label>
+              <Select
+                value={editForm.status}
+                onValueChange={(v) => setEditForm({ ...editForm, status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Organization */}
+            <div className="space-y-1">
+              <Label>Organization</Label>
+              <Select
+                onValueChange={(value) => handleOrgSelectEdit(value)}
+                value={editForm.orgId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id || org._id} value={org.id || org._id || ""}>
+                      {org.organizationName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Devices */}
+            <div>
+              <p className="text-sm font-medium mb-2">Assign Devices</p>
+              {availableDevices.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No devices available for this organization
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto border rounded-md p-2">
+                  {availableDevices.map((device) => (
+                    <label
+                      key={device._id}
+                      className="flex items-center space-x-2 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={editForm.devices.includes(device._id)}
+                        onCheckedChange={() => toggleEditDevice(device._id)}
+                      />
+                      <span className="text-sm">
+                        {device.name} ({device.deviceCode})
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Permissions */}
+            {availablePermissions.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Assign Permissions</p>
+                <div className="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto border rounded-md p-2">
+                  {availablePermissions.map((perm) => (
+                    <label
+                      key={perm}
+                      className="flex items-center space-x-2 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={editPermissions.includes(perm)}
+                        onCheckedChange={() => toggleEditPermission(perm)}
+                      />
+                      <span className="text-sm">{perm}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="p-6 border-t bg-muted/30 shrink-0">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={savingEdit}>
+              {savingEdit ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Search */}
       <div className="flex justify-end">
@@ -502,7 +793,22 @@ const EA_Nurses = () => {
                       Organization
                     </th>
                     <th className="text-left py-3 px-4 font-semibold">
-                      Country
+                      Assigned Devices
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold">
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(val) => setStatusFilter(val)}
+                      >
+                        <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted p-0 pr-2 font-semibold text-sm text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Status: All</SelectItem>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </th>
                     <th className="text-left py-3 px-4 font-semibold">
                       Actions
@@ -525,18 +831,47 @@ const EA_Nurses = () => {
                           n.organizationName ||
                           "—"}
                       </td>
-                      <td className="py-3 px-4">{n.country}</td>
-                      <td className="py-3 px-4 flex gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(n.id || n._id || "")}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                      <td className="py-3 px-4">
+                        {n.devices && n.devices.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {n.devices.map((d) => (
+                              <span
+                                key={d._id}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                              >
+                                {d.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                          n.status === "Inactive"
+                            ? "bg-gray-100 text-gray-800 border-gray-200"
+                            : "bg-[#e6f4ea] text-[#137333] border-[#ceead6]"
+                        )}>
+                          {n.status || "Active"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 flex items-center gap-3">
+                        {n.status !== "Inactive" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(n)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Switch
+                          checked={n.status !== "Inactive"}
+                          onCheckedChange={() => handleToggleStatus(n.id || n._id || "", n.status)}
+                          title={n.status === "Inactive" ? "Activate" : "Deactivate"}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -546,6 +881,29 @@ const EA_Nurses = () => {
           )}
         </CardContent>
       </Card>
+      {/* Confirm Status Change Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to set this nurse to{" "}
+              <span className="font-bold text-primary">
+                {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+              </span>
+              ?
+            </p>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeToggleStatus}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

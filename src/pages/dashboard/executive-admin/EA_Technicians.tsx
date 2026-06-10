@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -148,16 +151,23 @@ const EA_Technicians = () => {
   /* ================================
      Search Filter
   ================================ */
+  // ================================
+  // Search & Status Filter
+  // ================================
+  const [statusFilter, setStatusFilter] = useState("all");
+
   useEffect(() => {
-    if (search.trim() === "") setFiltered(technicians);
-    else {
-      setFiltered(
-        technicians.filter((t) =>
-          t.name.toLowerCase().includes(search.toLowerCase())
-        )
+    let list = technicians;
+    if (search.trim() !== "") {
+      list = list.filter((t) =>
+        t.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-  }, [search, technicians]);
+    if (statusFilter !== "all") {
+      list = list.filter((t) => (t.status || "Active") === statusFilter);
+    }
+    setFiltered(list);
+  }, [search, statusFilter, technicians]);
 
   /* ================================
      Step 1: Send OTP (with all data)
@@ -296,19 +306,29 @@ const EA_Technicians = () => {
   };
 
   /* ================================
-     Delete Technician
+     Toggle Technician Status
   ================================ */
-  const handleDelete = async (id?: string) => {
-    if (!id) return;
-    if (!confirm("Are you sure you want to delete this technician?")) return;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
 
+  const handleToggleStatus = (id?: string, currentStatus?: string) => {
+    if (!id) return;
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
     try {
-      await deleteTechnician(id);
-      toast({ title: "Technician deleted" });
+      await updateTechnician(id, { status: newStatus });
+      toast({ title: `Technician status updated to ${newStatus}` });
+      setConfirmOpen(false);
       fetchTechnicians();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast({ title: "Failed to delete technician", variant: "destructive" });
+      toast({ title: "Failed to update technician status", variant: "destructive" });
     }
   };
 
@@ -411,8 +431,8 @@ const EA_Technicians = () => {
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="sm:max-w-[480px]">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+            <DialogHeader className="p-6 border-b shrink-0">
               <DialogTitle>
                 {step === "form" ? "Add Technician" : "Verify OTP"}
               </DialogTitle>
@@ -425,7 +445,7 @@ const EA_Technicians = () => {
 
             {/* Step 1: Form */}
             {step === "form" && (
-              <div className="grid gap-4 py-4">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div>
                   <Label>Full Name *</Label>
                   <Input
@@ -520,7 +540,7 @@ const EA_Technicians = () => {
 
             {/* Step 2: OTP Verification */}
             {step === "otp" && (
-              <div className="grid gap-4 py-4">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div className="text-center">
                   <Send className="h-12 w-12 mx-auto text-primary mb-2" />
                   <p className="text-sm text-muted-foreground">
@@ -551,7 +571,7 @@ const EA_Technicians = () => {
               </div>
             )}
 
-            <DialogFooter>
+            <DialogFooter className="p-6 border-t bg-muted/30 shrink-0">
               {step === "form" ? (
                 <>
                   <Button
@@ -624,6 +644,21 @@ const EA_Technicians = () => {
                       Country
                     </th>
                     <th className="text-left py-3 px-4 font-semibold">
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(val) => setStatusFilter(val)}
+                      >
+                        <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted p-0 pr-2 font-semibold text-sm text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Status: All</SelectItem>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold">
                       Actions
                     </th>
                   </tr>
@@ -640,21 +675,31 @@ const EA_Technicians = () => {
                         {t.phone_number?.join(" ")}
                       </td>
                       <td className="py-3 px-4">{t.country}</td>
-                      <td className="py-3 px-4 flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(t)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(t._id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                      <td className="py-3 px-4">
+                        <span className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                          t.status === "Inactive"
+                            ? "bg-gray-100 text-gray-800 border-gray-200"
+                            : "bg-[#e6f4ea] text-[#137333] border-[#ceead6]"
+                        )}>
+                          {t.status || "Active"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 flex items-center gap-3">
+                        {t.status !== "Inactive" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(t)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Switch
+                          checked={t.status !== "Inactive"}
+                          onCheckedChange={() => handleToggleStatus(t._id, t.status)}
+                          title={t.status === "Inactive" ? "Activate" : "Deactivate"}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -667,15 +712,15 @@ const EA_Technicians = () => {
 
       {/* Edit Technician Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b shrink-0">
             <DialogTitle>Edit Technician</DialogTitle>
             <DialogDescription>
               Update technician profile and permissions
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             <div>
               <Label>Full Name *</Label>
               <Input
@@ -709,6 +754,22 @@ const EA_Technicians = () => {
               />
             </div>
 
+            <div>
+              <Label>Status</Label>
+              <Select
+                value={editForm.status}
+                onValueChange={(v) => setEditForm({ ...editForm, status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Permissions */}
             <div className="border rounded-md p-3 bg-muted/30">
               <div className="flex items-center gap-2 mb-2">
@@ -730,12 +791,35 @@ const EA_Technicians = () => {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="p-6 border-t bg-muted/30 shrink-0">
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleUpdate} disabled={savingEdit}>
               {savingEdit ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Confirm Status Change Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to set this technician to{" "}
+              <span className="font-bold text-primary">
+                {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+              </span>
+              ?
+            </p>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeToggleStatus}>
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -8,7 +8,6 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  Navigate,
   useNavigate,
   useLocation,
 } from "react-router-dom";
@@ -51,6 +50,8 @@ import EA_Devices from "./pages/dashboard/executive-admin/EA_Devices";
 import EA_Reports from "./pages/dashboard/executive-admin/EA_Reports";
 import EA_UserHeads from "./pages/dashboard/executive-admin/EA_UserHeads";
 import EA_Nurses from "./pages/dashboard/executive-admin/EA_Nurses";
+import EA_Analytics from "./pages/dashboard/executive-admin/EA_Analytics";
+import EA_MachineAnalytics from "./pages/dashboard/executive-admin/EA_MachineAnalytics";
 
 /* =======================
    Cluster Head Pages
@@ -164,6 +165,7 @@ const App = () => (
             >
               <Route index element={<EA_Organizations />} />
 
+              <Route path="analytics" element={<EA_Analytics />} />
               <Route path="organizations" element={<EA_Organizations />} />
               <Route path="organizations/:id" element={<EA_OrganisationView />} />
 
@@ -176,6 +178,7 @@ const App = () => (
               <Route path="technicians" element={<EA_Technicians />} />
 
               <Route path="devices" element={<EA_Devices />} />
+              <Route path="devices/:productId/analytics" element={<EA_MachineAnalytics />} />
               <Route path="reports" element={<EA_Reports />} />
             </Route>
           </Route>

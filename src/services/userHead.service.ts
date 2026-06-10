@@ -15,7 +15,24 @@ export const verifyUserHead = (data: { otp: string }) =>
   });
 
 export const deleteUserHead = (id: string) =>
-  apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
+  apiRequest("/api/inactive/all/entity/toggle-status", {
+    method: "POST",
+    data: {
+      targetId: id,
+      targetType: "user",
+      status: "Inactive",
+    },
+  });
+
+export const toggleUserHeadStatus = (id: string, status: string) =>
+  apiRequest("/api/inactive/all/entity/toggle-status", {
+    method: "POST",
+    data: {
+      targetId: id,
+      targetType: "user",
+      status,
+    },
+  });
 
 export const updateUserHead = (id: string, data: any) =>
   apiRequest(`/update/user/${id}`, {

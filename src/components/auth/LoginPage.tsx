@@ -147,8 +147,6 @@ const LoginPage = () => {
       let response;
       if (mode === "patient") {
         response = await userAuthVerify({
-          phone_number: ["91", phone],
-          country: "India",
           otp,
         });
       } else {

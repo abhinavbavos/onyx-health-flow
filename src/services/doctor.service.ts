@@ -6,14 +6,17 @@ export const listDoctors = async () => {
 };
 
 export const createDoctor = async (payload: any) => {
-  return apiRequest("/api/auth/create/doctor", {
+  return apiRequest("/api/doctor/admin/create", {
     method: "POST",
     data: payload,
   });
 };
 
 export const deleteDoctor = async (id: string) => {
-  return apiRequest(`/delete/profile/${id}`, { method: "DELETE" });
+  return apiRequest(`/update/user/${id}`, {
+    method: "PUT",
+    data: { status: "Inactive" },
+  });
 };
 
 export const updateDoctor = async (id: string, payload: any) => {

@@ -15,11 +15,13 @@ import {
   deleteTechnician,
   verifyTechnicianOTP,
   listTechnicians,
+  updateTechnician,
 } from "@/services/technician.service";
 import { getUserPermissions } from "@/services/permission.service";
 import { apiRequest } from "@/lib/api-request";
 import { resendOtp } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
@@ -34,6 +36,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+  SelectItem,
+} from "@/components/ui/select";
 
 /**
  * 🛠️ Cluster Head – Technicians Management Page
@@ -143,18 +152,25 @@ const CH_Technicians = () => {
   }, []);
 
   // ───────────────────────── Filter Logic ─────────────────────────
-  const filteredTechs = useMemo(() => {
-    if (!searchTerm.trim()) return technicians;
+  const [statusFilter, setStatusFilter] = useState("all");
 
-    const q = searchTerm.toLowerCase();
-    return technicians.filter((t: any) => {
-      return (
-        t.name?.toLowerCase().includes(q) ||
-        t.phone_number?.join("").includes(q) ||
-        t.country?.toLowerCase().includes(q)
-      );
-    });
-  }, [searchTerm, technicians]);
+  const filteredTechs = useMemo(() => {
+    let list = technicians;
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      list = list.filter((t: any) => {
+        return (
+          t.name?.toLowerCase().includes(q) ||
+          t.phone_number?.join("").includes(q) ||
+          t.country?.toLowerCase().includes(q)
+        );
+      });
+    }
+    if (statusFilter !== "all") {
+      list = list.filter((t: any) => (t.status || "Active") === statusFilter);
+    }
+    return list;
+  }, [searchTerm, statusFilter, technicians]);
 
   // ───────────────────────── Add Technician: Step 1 (send OTP) ─────────────────────────
   const handleAddTechSubmit = async () => {
@@ -253,17 +269,28 @@ const CH_Technicians = () => {
     }
   };
 
-  // ───────────────────────── Delete Technician ─────────────────────────
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this technician?")) return;
+  // ───────────────────────── Toggle Technician Status ─────────────────────────
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
+
+  const handleToggleStatus = (id: string, currentStatus?: string) => {
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
     try {
-      await deleteTechnician(id);
-      toast({ title: "Technician deleted successfully" });
+      await updateTechnician(id, { status: newStatus });
+      toast({ title: `Technician status updated to ${newStatus}` });
+      setConfirmOpen(false);
       fetchOrgAndTechnicians();
     } catch (err: any) {
-      console.error("Error deleting technician:", err);
+      console.error("Error toggling technician status:", err);
       toast({
-        title: "Failed to delete technician",
+        title: "Failed to update status",
         description: err.message || "Something went wrong.",
         variant: "destructive",
       });
@@ -515,7 +542,21 @@ const CH_Technicians = () => {
                   <th className="text-left py-3 px-4 font-semibold">Name</th>
                   <th className="text-left py-3 px-4 font-semibold">Phone</th>
                   <th className="text-left py-3 px-4 font-semibold">Country</th>
-                  <th className="text-left py-3 px-4 font-semibold">Status</th>
+                  <th className="text-left py-3 px-4 font-semibold">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(val) => setStatusFilter(val)}
+                    >
+                      <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted p-0 pr-2 font-semibold text-sm text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Status: All</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </th>
                   <th className="text-left py-3 px-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -547,14 +588,11 @@ const CH_Technicians = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(t._id || t.id || "")}
-                        title="Delete technician"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <Switch
+                        checked={t.status !== "Inactive"}
+                        onCheckedChange={() => handleToggleStatus(t._id || t.id || "", t.status)}
+                        title={t.status === "Inactive" ? "Activate" : "Deactivate"}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -563,6 +601,29 @@ const CH_Technicians = () => {
           </div>
         )}
       </div>
+      {/* Confirm Status Change Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to set this technician to{" "}
+              <span className="font-bold text-primary">
+                {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+              </span>
+              ?
+            </p>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeToggleStatus}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

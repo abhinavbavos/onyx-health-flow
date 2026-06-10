@@ -1,4 +1,4 @@
-    import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/components/ui/use-toast";
 import { Search, FileText, Download, Info, User, Cpu, Calendar } from "lucide-react";
 import { apiRequest } from "@/lib/api-request";
+import { viewUser } from "@/services/user.service";
 
 interface Report {
   _id: string;
@@ -47,6 +48,7 @@ const EA_Reports = () => {
   const [loading, setLoading] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const userRole = localStorage.getItem("userRole") || "";
 
   // ================================
   // Fetch All Reports
@@ -54,7 +56,13 @@ const EA_Reports = () => {
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const res = await apiRequest("/api/report/all", { method: "GET" });
+      let endpoint = "/api/report/all";
+      if (userRole === "user") {
+        const user = await viewUser();
+        const userId = user.id || user._id;
+        endpoint = `/api/report/byUser/${userId}`;
+      }
+      const res = await apiRequest(endpoint, { method: "GET" });
       const list = Array.isArray(res?.reports) ? res.reports : [];
       setReports(list);
       setFiltered(list);
@@ -81,9 +89,9 @@ const EA_Reports = () => {
       setFiltered(
         reports.filter(
           (r) =>
-            r.reportCode.toLowerCase().includes(s) ||
-            r.profile.name.toLowerCase().includes(s) ||
-            r.product.name.toLowerCase().includes(s)
+            (r?.reportCode || "").toLowerCase().includes(s) ||
+            (r?.profile?.name || "").toLowerCase().includes(s) ||
+            (r?.product?.name || "").toLowerCase().includes(s)
         )
       );
     }
@@ -162,7 +170,7 @@ const EA_Reports = () => {
       {/* Reports Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Reports</CardTitle>
+          <CardTitle>{userRole === "user" ? "Your Health Reports" : "All Reports"}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -192,24 +200,42 @@ const EA_Reports = () => {
                       key={r._id}
                       className="border-b hover:bg-muted/40 transition-colors"
                     >
-                      <td className="py-3 px-4 font-medium">{r.reportCode}</td>
+                      <td className="py-3 px-4 font-medium">{r?.reportCode || "—"}</td>
                       <td className="py-3 px-4">
-                        <Button
-                          variant="link"
-                          className="text-primary px-0"
-                          onClick={() => handleViewByProfile(r.profile._id)}
-                        >
-                          {r.profile.name} ({r.profile.patientCode})
-                        </Button>
+                        {r?.profile ? (
+                          userRole === "user" ? (
+                            <span>
+                              {r.profile.name || "—"} {r.profile.patientCode ? `(${r.profile.patientCode})` : ""}
+                            </span>
+                          ) : (
+                            <Button
+                              variant="link"
+                              className="text-primary px-0"
+                              onClick={() => handleViewByProfile(r.profile._id)}
+                            >
+                              {r.profile.name || "—"} {r.profile.patientCode ? `(${r.profile.patientCode})` : ""}
+                            </Button>
+                          )
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="py-3 px-4">
-                        {r.product.name} ({r.product.modelNo})
+                        {r?.product ? (
+                          `${r.product.name || "—"} ${r.product.modelNo ? `(${r.product.modelNo})` : ""}`
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="py-3 px-4 text-muted-foreground">
-                        +{r.uploadedBy.phone_number.join(" ")}
+                        {Array.isArray(r?.uploadedBy?.phone_number)
+                          ? `+${r.uploadedBy.phone_number.join(" ")}`
+                          : r?.uploadedBy?.phone_number
+                          ? `+${r.uploadedBy.phone_number}`
+                          : "—"}
                       </td>
                       <td className="py-3 px-4">
-                        {new Date(r.createdAt).toLocaleString()}
+                        {r?.createdAt ? new Date(r.createdAt).toLocaleString() : "—"}
                       </td>
                       <td className="py-3 px-4 flex gap-2">
                         <Button
@@ -222,7 +248,8 @@ const EA_Reports = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => downloadReport(r.s3Link)}
+                          onClick={() => downloadReport(r?.s3Link || "#")}
+                          disabled={!r?.s3Link}
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -247,24 +274,28 @@ const EA_Reports = () => {
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" />
                 <span className="font-medium">Patient:</span>
-                <span>{selectedReport.profile.name}</span>
+                <span>{selectedReport.profile?.name || "—"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Cpu className="h-4 w-4 text-primary" />
                 <span className="font-medium">Device:</span>
                 <span>
-                  {selectedReport.product.name} ({selectedReport.product.modelNo})
+                  {selectedReport.product?.name || "—"}{" "}
+                  {selectedReport.product?.modelNo ? `(${selectedReport.product.modelNo})` : ""}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
                 <span className="font-medium">Uploaded:</span>
-                <span>{new Date(selectedReport.createdAt).toLocaleString()}</span>
+                <span>
+                  {selectedReport.createdAt ? new Date(selectedReport.createdAt).toLocaleString() : "—"}
+                </span>
               </div>
               <div className="mt-4">
                 <Button
                   className="w-full"
-                  onClick={() => downloadReport(selectedReport.s3Link)}
+                  onClick={() => downloadReport(selectedReport.s3Link || "#")}
+                  disabled={!selectedReport.s3Link}
                 >
                   <Download className="h-4 w-4 mr-2" /> View Report PDF
                 </Button>

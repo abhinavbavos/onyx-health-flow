@@ -25,3 +25,9 @@ export const listUsers = async (): Promise<User[]> => {
     method: 'GET',
   });
 };
+
+export const deleteCurrentUser = async (): Promise<void> => {
+  return apiRequest(API_ENDPOINTS.USER.DELETE, {
+    method: 'DELETE',
+  });
+};

@@ -72,6 +72,11 @@ export const API_ENDPOINTS = {
     ADD_RESULT: '/add/session-items-result',
     ADD_MEDIA: '/add/session-items-media',
     GET_MEDIA: (id: string, fileKey: string) => `/session-items/${id}/media/${fileKey}`,
+    LIST_BY_SESSION: (sessionId: string) => `/sessions/${sessionId}/items`,
+    VIEW: (id: string) => `/session-items/${id}`,
+    VIEW_URLS: (id: string) => `/session-items/${id}/view-urls`,
+    LIST_MEDIA: (id: string) => `/session-items/${id}/media`,
+    GET_MEDIA_INDEX: (id: string, index: number) => `/session-items/${id}/media/${index}`,
   },
   
   // Test endpoints
@@ -95,6 +100,7 @@ export const API_ENDPOINTS = {
   USER: {
     VIEW: '/view/user',
     UPDATE: (id: string) => `/update/user/${id}`,
+    DELETE: '/api/user/delete',
   },
   
   // Organization endpoints

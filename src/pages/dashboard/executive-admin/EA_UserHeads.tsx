@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -29,12 +30,16 @@ import {
   Shield,
   Cpu,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 import {
   createUserHead,
   deleteUserHead,
   listUserHeads,
   verifyUserHead,
+  updateUserHead,
+  toggleUserHeadStatus,
 } from "@/services/userHead.service";
 import { listOrganizations } from "@/services/organization.service";
 import { getUserPermissions } from "@/services/permission.service";
@@ -54,6 +59,7 @@ interface Organization {
   id?: string;
   _id?: string;
   organizationName: string;
+  organizationCode?: string;
   devices?: { _id: string; name: string; deviceCode?: string }[];
   userId?: { _id: string; name: string };
 }
@@ -89,6 +95,121 @@ const EA_UserHeads = () => {
 
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+
+  // ====== Edit States ======
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingUserHead, setEditingUserHead] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    phone_country: "91",
+    phone_number: "",
+    country: "India",
+    orgId: "",
+    status: "Active",
+  });
+  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [editDevices, setEditDevices] = useState<string[]>([]);
+  const [availableDevices, setAvailableDevices] = useState<any[]>([]);
+  const [availablePermissions, setAvailablePermissions] = useState<string[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const handleEdit = async (u: any) => {
+    setEditingUserHead(u);
+    setEditForm({
+      name: u.name,
+      phone_country: u.phone_number?.[0] || "91",
+      phone_number: u.phone_number?.[1] || "",
+      country: u.country || "India",
+      orgId: u.orgId || u.organization?._id || u.organization?.id || "",
+      status: u.status || "Active",
+    });
+    setEditPermissions(u.permissions || []);
+    setEditDevices(u.devices || []);
+
+    // Load available devices and permissions for the selected organization
+    const orgId = u.orgId || u.organization?._id || u.organization?.id || "";
+    const selectedOrg = organizations.find(
+      (o) => o.id === orgId || o._id === orgId
+    );
+    setAvailableDevices(selectedOrg?.devices || []);
+
+    if (selectedOrg?.userId?._id) {
+      try {
+        const perms = await getUserPermissions(selectedOrg.userId._id);
+        setAvailablePermissions(perms);
+      } catch (err) {
+        console.error("Failed to load permissions:", err);
+      }
+    } else {
+      setAvailablePermissions([]);
+    }
+
+    setEditDialogOpen(true);
+  };
+
+  const handleOrgSelectEdit = async (orgId: string) => {
+    setEditForm((prev) => ({ ...prev, orgId }));
+    setEditDevices([]);
+    setEditPermissions([]);
+    setAvailableDevices([]);
+    setAvailablePermissions([]);
+
+    const selectedOrg = organizations.find(
+      (o) => o.id === orgId || o._id === orgId
+    );
+    setAvailableDevices(selectedOrg?.devices || []);
+
+    if (!selectedOrg?.userId?._id) return;
+
+    try {
+      const perms = await getUserPermissions(selectedOrg.userId._id);
+      setAvailablePermissions(perms);
+      setEditPermissions(perms); // auto-select all
+    } catch (err) {
+      console.error("Failed to load permissions:", err);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingUserHead) return;
+    setSavingEdit(true);
+    try {
+      const payload = {
+        name: editForm.name,
+        phone_number: [editForm.phone_country, editForm.phone_number],
+        country: editForm.country,
+        orgId: editForm.orgId,
+        status: editForm.status,
+        permissions: editPermissions,
+        devices: editDevices,
+      };
+
+      await updateUserHead(editingUserHead._id || editingUserHead.id, payload);
+      toast({ title: "User Head updated successfully" });
+      setEditDialogOpen(false);
+      fetchUserHeads();
+    } catch (err: any) {
+      toast({
+        title: "Failed to update User Head",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const toggleEditPermission = (perm: string) => {
+    setEditPermissions((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
+  };
+
+  const toggleEditDevice = (id: string) => {
+    setEditDevices((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
+    );
+  };
 
   // ================================
   // Fetch all user heads
@@ -183,17 +304,22 @@ const EA_UserHeads = () => {
   };
 
   // ================================
-  // Search filter
+  // Search & Status Filter
   // ================================
+  const [statusFilter, setStatusFilter] = useState("all");
+
   useEffect(() => {
-    if (search.trim() === "") setFiltered(userHeads);
-    else {
-      const filteredList = userHeads.filter((u) =>
+    let list = userHeads;
+    if (search.trim() !== "") {
+      list = list.filter((u) =>
         u.name.toLowerCase().includes(search.toLowerCase())
       );
-      setFiltered(filteredList);
     }
-  }, [search, userHeads]);
+    if (statusFilter !== "all") {
+      list = list.filter((u) => (u.status || "Active") === statusFilter);
+    }
+    setFiltered(list);
+  }, [search, statusFilter, userHeads]);
 
   // ================================
   // Toggle handlers
@@ -226,12 +352,15 @@ const EA_UserHeads = () => {
     }
 
     try {
+      const selectedOrg = organizations.find(
+        (o) => o.id === orgId || o._id === orgId
+      );
       const payload = {
         phone_number: [phone_country, phone_number],
         password,
         name,
         country,
-        orgId,
+        orgId: selectedOrg?.organizationCode || orgId,
         permissions: selectedPermissions,
         devices: selectedDevices,
       };
@@ -264,17 +393,28 @@ const EA_UserHeads = () => {
   };
 
   // ================================
-  // Delete User Head
+  // Toggle User Head Status
   // ================================
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this User Head?")) return;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
+
+  const handleToggleStatus = (id: string, currentStatus?: string) => {
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
     try {
-      await deleteUserHead(id);
-      toast({ title: "User Head deleted" });
+      await toggleUserHeadStatus(id, newStatus);
+      toast({ title: `User Head is now ${newStatus}` });
+      setConfirmOpen(false);
       fetchUserHeads();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast({ title: "Failed to delete", variant: "destructive" });
+      toast({ title: "Failed to update status", variant: "destructive" });
     }
   };
 
@@ -302,12 +442,12 @@ const EA_UserHeads = () => {
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+            <DialogHeader className="p-6 border-b shrink-0">
               <DialogTitle>Create User Head</DialogTitle>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
               <Input
                 placeholder="Full Name"
                 value={formData.name}
@@ -413,7 +553,7 @@ const EA_UserHeads = () => {
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="p-6 border-t bg-muted/30 shrink-0">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
@@ -445,6 +585,155 @@ const EA_UserHeads = () => {
               Cancel
             </Button>
             <Button onClick={handleVerifyOtp}>Verify</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Head Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b shrink-0">
+            <DialogTitle>Edit User Head</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="space-y-1">
+              <Label>Full Name</Label>
+              <Input
+                placeholder="Full Name"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Phone Connectivity</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Country Code"
+                  value={editForm.phone_country}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, phone_country: e.target.value })
+                  }
+                  className="w-20"
+                />
+                <Input
+                  placeholder="Phone Number"
+                  value={editForm.phone_number}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, phone_number: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Country</Label>
+              <Input
+                placeholder="Country"
+                value={editForm.country}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, country: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Status</Label>
+              <Select
+                value={editForm.status}
+                onValueChange={(v) => setEditForm({ ...editForm, status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Organization Select */}
+            <div className="space-y-1">
+              <Label>Organization</Label>
+              <Select
+                onValueChange={(value) => handleOrgSelectEdit(value)}
+                value={editForm.orgId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  {organizations.map((org) => (
+                    <SelectItem
+                      key={org.id || org._id}
+                      value={org.id || org._id || ""}
+                    >
+                      {org.organizationName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Permissions */}
+            {availablePermissions.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2 flex items-center gap-1">
+                  <Shield className="h-4 w-4 text-primary" /> Update Permissions
+                </p>
+                <div className="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto border rounded-md p-2">
+                  {availablePermissions.map((perm) => (
+                    <label
+                      key={perm}
+                      className="flex items-center space-x-2 text-sm cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={editPermissions.includes(perm)}
+                        onCheckedChange={() => toggleEditPermission(perm)}
+                      />
+                      <span>{perm}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Devices */}
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-1">
+                <Cpu className="h-4 w-4 text-primary" /> Assign Devices
+              </p>
+              {availableDevices.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No devices available for this organization
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto border rounded-md p-2">
+                  {availableDevices.map((device) => (
+                    <label
+                      key={device._id}
+                      className="flex items-center space-x-2 text-sm cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={editDevices.includes(device._id)}
+                        onCheckedChange={() => toggleEditDevice(device._id)}
+                      />
+                      <span>{device.name || device.deviceName}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="p-6 border-t bg-muted/30 shrink-0">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={savingEdit}>
+              {savingEdit ? "Saving..." : "Save Changes"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -490,6 +779,21 @@ const EA_UserHeads = () => {
                       Country
                     </th>
                     <th className="text-left py-3 px-4 font-semibold">
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(val) => setStatusFilter(val)}
+                      >
+                        <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted p-0 pr-2 font-semibold text-sm text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Status: All</SelectItem>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold">
                       Actions
                     </th>
                   </tr>
@@ -509,17 +813,31 @@ const EA_UserHeads = () => {
                         {u.organizationName || "—"}
                       </td>
                       <td className="py-3 px-4">{u.country}</td>
-                      <td className="py-3 px-4 flex gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(u.id || u._id || "")}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                      <td className="py-3 px-4">
+                        <span className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                          u.status === "Inactive"
+                            ? "bg-gray-100 text-gray-800 border-gray-200"
+                            : "bg-[#e6f4ea] text-[#137333] border-[#ceead6]"
+                        )}>
+                          {u.status || "Active"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 flex items-center gap-3">
+                        {u.status !== "Inactive" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(u)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Switch
+                          checked={u.status !== "Inactive"}
+                          onCheckedChange={() => handleToggleStatus(u.id || u._id || "", u.status)}
+                          title={u.status === "Inactive" ? "Activate" : "Deactivate"}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -529,6 +847,29 @@ const EA_UserHeads = () => {
           )}
         </CardContent>
       </Card>
+      {/* Confirm Status Change Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to set this User Head to{" "}
+              <span className="font-bold text-primary">
+                {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+              </span>
+              ?
+            </p>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeToggleStatus}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

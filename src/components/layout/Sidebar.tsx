@@ -53,6 +53,11 @@ const Sidebar = () => {
         path: "/dashboard/executive-admin",
       },
       {
+        label: "Analytics",
+        icon: Activity,
+        path: "/dashboard/executive-admin/analytics",
+      },
+      {
         label: "Executive Admins",
         icon: Users,
         path: "/dashboard/executive-admin/executives",
@@ -140,6 +145,33 @@ const Sidebar = () => {
         label: "Linked Accounts",
         icon: Building2,
         path: "/dashboard/cluster-head/linked-accounts",
+      },
+    ],
+    "user": [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard/user",
+      },
+      {
+        label: "Profile",
+        icon: User2,
+        path: "/dashboard/user/profile",
+      },
+      {
+        label: "Sessions",
+        icon: Activity,
+        path: "/dashboard/user/sessions",
+      },
+      {
+        label: "Reports",
+        icon: FileText,
+        path: "/dashboard/user/reports",
+      },
+      {
+        label: "Consultations",
+        icon: Stethoscope,
+        path: "/dashboard/user/consultancy",
       },
     ],
   };

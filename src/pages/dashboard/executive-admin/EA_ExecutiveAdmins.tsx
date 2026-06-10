@@ -15,9 +15,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, Plus, Shield } from "lucide-react";
-import { createExecAdmin, verifyExecAdmin, listExecutives } from "@/services/executiveAdmin.service";
+import { Search, Plus, Shield, Trash2 } from "lucide-react";
+import { createExecAdmin, verifyExecAdmin, listExecutives, deleteExecAdmin, updateExecAdmin } from "@/services/executiveAdmin.service";
+import { Switch } from "@/components/ui/switch";
 
 const EA_ExecutiveAdmins = () => {
   const { toast } = useToast();
@@ -41,40 +49,74 @@ const EA_ExecutiveAdmins = () => {
   // =============================
   // Fetch all Executive Admins
   // =============================
+  const fetchExecutives = async () => {
+    setLoading(true);
+    try {
+      const data = await listExecutives();
+      const list = data.executives || data;
+      setExecutives(list);
+      setFilteredExecutives(list);
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error fetching Executive Admins",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchExecutives = async () => {
-      setLoading(true);
-      try {
-        const data = await listExecutives();
-        const list = data.executives || data;
-        setExecutives(list);
-        setFilteredExecutives(list);
-      } catch (err) {
-        console.error(err);
-        toast({
-          title: "Error fetching Executive Admins",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchExecutives();
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // =============================
-  // Search Filter
+  // Toggle & Status Filter States
+  // =============================
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const handleToggleStatus = (id: string, currentStatus?: string) => {
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
+    try {
+      await updateExecAdmin(id, { status: newStatus });
+      toast({ title: `Executive Admin is now ${newStatus}` });
+      setConfirmOpen(false);
+      fetchExecutives();
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // =============================
+  // Search & Status Filter
   // =============================
   useEffect(() => {
-    if (search.trim() === "") setFilteredExecutives(executives);
-    else {
-      setFilteredExecutives(
-        executives.filter((admin) =>
-          admin.name.toLowerCase().includes(search.toLowerCase())
-        )
+    let list = executives;
+    if (search.trim() !== "") {
+      list = list.filter((admin) =>
+        admin.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-  }, [search, executives]);
+    if (statusFilter !== "all") {
+      list = list.filter((admin) => (admin.status || "Active") === statusFilter);
+    }
+    setFilteredExecutives(list);
+  }, [search, statusFilter, executives]);
 
   // =============================
   // Create Executive Admin
@@ -130,9 +172,7 @@ const EA_ExecutiveAdmins = () => {
       setOtpCode("");
 
       // Refresh list
-      const data = await listExecutives();
-      setExecutives(data.executives || data);
-      setFilteredExecutives(data.executives || data);
+      fetchExecutives();
     } catch (err) {
       console.error(err);
       toast({ title: "OTP verification failed", variant: "destructive" });
@@ -282,10 +322,25 @@ const EA_ExecutiveAdmins = () => {
                       Country
                     </th>
                     <th className="text-left py-3 px-4 font-semibold">
-                      Status
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(val) => setStatusFilter(val)}
+                      >
+                        <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted p-0 pr-2 font-semibold text-sm text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Status: All</SelectItem>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </th>
                     <th className="text-left py-3 px-4 font-semibold">
                       Created At
+                    </th>
+                    <th className="text-right py-3 px-4 font-semibold">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -316,6 +371,13 @@ const EA_ExecutiveAdmins = () => {
                       <td className="py-3 px-4 text-muted-foreground">
                         {new Date(admin.createdAt).toLocaleString()}
                       </td>
+                      <td className="py-3 px-4 text-right flex items-center justify-end">
+                        <Switch
+                          checked={admin.status !== "Inactive"}
+                          onCheckedChange={() => handleToggleStatus(admin._id, admin.status)}
+                          title={admin.status === "Inactive" ? "Activate" : "Deactivate"}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -324,6 +386,29 @@ const EA_ExecutiveAdmins = () => {
           )}
         </CardContent>
       </Card>
+      {/* Confirm Status Change Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to set this Executive Admin to{" "}
+              <span className="font-bold text-primary">
+                {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+              </span>
+              ?
+            </p>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeToggleStatus}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

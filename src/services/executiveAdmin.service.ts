@@ -20,3 +20,17 @@ export const verifyExecAdmin = async (payload: any) => {
     data: payload,
   });
 };
+
+export const deleteExecAdmin = async (id: string) => {
+  return apiRequest(`/update/user/${id}`, {
+    method: "PUT",
+    data: { status: "Inactive" },
+  });
+};
+
+export const updateExecAdmin = async (id: string, payload: any) => {
+  return apiRequest(`/update/user/${id}`, {
+    method: "PUT",
+    data: payload,
+  });
+};

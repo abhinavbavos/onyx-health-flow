@@ -16,6 +16,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -29,11 +36,13 @@ import {
   KeyRound,
   RefreshCcw,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   listClusterHeads,
   createClusterHead,
   verifyClusterHead,
   deleteClusterHead,
+  updateClusterHead,
 } from "@/services/clusterHead.service";
 import { listOrganizations } from "@/services/organization.service";
 import { getPermissions } from "@/services/permission.service";
@@ -44,6 +53,7 @@ interface ClusterHead {
   _id: string;
   name: string;
   phone_number: string[];
+  status?: string;
   organization?: {
     organizationName: string;
     organizationCode?: string;
@@ -80,6 +90,75 @@ const EA_ClusterHeads = () => {
     organizationName: "",
     location: { line1: "", line2: "", line3: "" },
   });
+
+  // ====== Edit States ======
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingCluster, setEditingCluster] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    phone_country: "91",
+    phone_number: "",
+    country: "India",
+    organizationName: "",
+    location: { line1: "", line2: "", line3: "" },
+    status: "Active",
+  });
+  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const handleEdit = (cluster: any) => {
+    setEditingCluster(cluster);
+    setEditForm({
+      name: cluster.name,
+      phone_country: cluster.phone_number?.[0] || "91",
+      phone_number: cluster.phone_number?.[1] || "",
+      country: cluster.country || "India",
+      organizationName: cluster.organization?.organizationName || "",
+      location: {
+        line1: cluster.organization?.location?.line1 || "",
+        line2: cluster.organization?.location?.line2 || "",
+        line3: cluster.organization?.location?.line3 || "",
+      },
+      status: cluster.status || "Active",
+    });
+    setEditPermissions(cluster.permissions || []);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingCluster) return;
+    setSavingEdit(true);
+    try {
+      const payload = {
+        name: editForm.name,
+        phone_number: [editForm.phone_country, editForm.phone_number],
+        country: editForm.country,
+        organizationName: editForm.organizationName,
+        location: editForm.location,
+        status: editForm.status,
+        permissions: editPermissions,
+      };
+
+      await updateClusterHead(editingCluster._id || editingCluster.id, payload);
+      toast({ title: "Cluster head updated successfully" });
+      setEditDialogOpen(false);
+      fetchClusterHeads();
+    } catch (err: any) {
+      toast({
+        title: "Failed to update cluster head",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const toggleEditPermission = (perm: string) => {
+    setEditPermissions((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
+  };
 
   const [timer, setTimer] = useState(0);
 
@@ -176,17 +255,21 @@ const EA_ClusterHeads = () => {
     fetchPermissions();
   }, []);
 
-  // ====== Search Filter ======
+  // ====== Search & Status Filter ======
+  const [statusFilter, setStatusFilter] = useState("all");
+
   useEffect(() => {
-    if (!search.trim()) setFiltered(clusterHeads);
-    else {
-      setFiltered(
-        clusterHeads.filter((c) =>
-          c.name.toLowerCase().includes(search.toLowerCase())
-        )
+    let list = clusterHeads;
+    if (search.trim() !== "") {
+      list = list.filter((c) =>
+        c.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-  }, [search, clusterHeads]);
+    if (statusFilter !== "all") {
+      list = list.filter((c) => (c.status || "Active") === statusFilter);
+    }
+    setFiltered(list);
+  }, [search, statusFilter, clusterHeads]);
 
   // ====== Create Cluster Head ======
   const handleSubmit = async () => {
@@ -253,16 +336,27 @@ const EA_ClusterHeads = () => {
     }
   };
 
-  // ====== Delete Cluster Head ======
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this cluster head?")) return;
+  // ====== Toggle Status ======
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
+
+  const handleToggleStatus = (id: string, currentStatus?: string) => {
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
     try {
-      await deleteClusterHead(id);
-      toast({ title: "Cluster head deleted" });
+      await updateClusterHead(id, { status: newStatus });
+      toast({ title: `Cluster head is now ${newStatus}` });
+      setConfirmOpen(false);
       fetchClusterHeads();
     } catch (err) {
       console.error(err);
-      toast({ title: "Failed to delete cluster head", variant: "destructive" });
+      toast({ title: "Failed to update status", variant: "destructive" });
     }
   };
 
@@ -285,12 +379,12 @@ const EA_ClusterHeads = () => {
               <Plus className="h-5 w-5 mr-2" /> Add Cluster Head
             </Button>
           </DialogTrigger>
-          <DialogContent className="glass-panel border-none shadow-2xl sm:max-w-[600px] rounded-[30px] p-0 overflow-hidden">
-            <DialogHeader className="p-8 bg-white/40 border-b border-white/50">
+          <DialogContent className="glass-panel border-none shadow-2xl sm:max-w-[600px] rounded-[30px] p-0 max-h-[90vh] flex flex-col gap-0 overflow-hidden">
+            <DialogHeader className="p-8 bg-white/40 border-b border-white/50 shrink-0">
               <DialogTitle className="text-2xl font-bold text-[#2d3748]">New Cluster Stakeholder</DialogTitle>
             </DialogHeader>
 
-            <div className="p-8 space-y-6">
+            <div className="p-8 space-y-6 flex-1 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Full Name</Label>
@@ -387,7 +481,7 @@ const EA_ClusterHeads = () => {
               </div>
             </div>
 
-            <DialogFooter className="p-8 bg-gray-50/50 border-t border-gray-100">
+            <DialogFooter className="p-8 bg-gray-50/50 border-t border-gray-100 shrink-0">
               <Button variant="ghost" onClick={() => setDialogOpen(false)} className="rounded-xl font-bold h-12 px-6">
                 Cancel
               </Button>
@@ -398,6 +492,126 @@ const EA_ClusterHeads = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Edit Cluster Head Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="glass-panel border-none shadow-2xl sm:max-w-[600px] rounded-[30px] p-0 max-h-[90vh] flex flex-col gap-0 overflow-hidden">
+          <DialogHeader className="p-8 bg-white/40 border-b border-white/50 shrink-0">
+            <DialogTitle className="text-2xl font-bold text-[#2d3748]">Edit Cluster Stakeholder</DialogTitle>
+          </DialogHeader>
+
+          <div className="p-8 space-y-6 flex-1 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Full Name</Label>
+                <Input
+                  placeholder="e.g. Dr. Jane Smith"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="rounded-xl border-gray-200 h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Status</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(value) => setEditForm({ ...editForm, status: value })}
+                >
+                  <SelectTrigger className="rounded-xl border-gray-200 h-11">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Phone Connectivity</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="+91"
+                  value={editForm.phone_country}
+                  onChange={(e) => setEditForm({ ...editForm, phone_country: e.target.value })}
+                  className="w-24 rounded-xl border-gray-200 h-11 text-center"
+                />
+                <Input
+                  placeholder="Primary Mobile Number"
+                  value={editForm.phone_number}
+                  onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
+                  className="flex-1 rounded-xl border-gray-200 h-11"
+                />
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white/40 px-3 text-xs font-extrabold text-gray-400 uppercase tracking-widest">Organization Details</span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Clinical Entity Name</Label>
+                <Input
+                  placeholder="e.g. Apollo Healthcare"
+                  value={editForm.organizationName}
+                  onChange={(e) => setEditForm({ ...editForm, organizationName: e.target.value })}
+                  className="rounded-xl border-gray-200 h-11"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  placeholder="Street Address"
+                  value={editForm.location.line1}
+                  onChange={(e) => setEditForm({ ...editForm, location: { ...editForm.location, line1: e.target.value } })}
+                  className="rounded-xl border-gray-200 h-11"
+                />
+                <Input
+                  placeholder="City / Region"
+                  value={editForm.location.line2}
+                  onChange={(e) => setEditForm({ ...editForm, location: { ...editForm.location, line2: e.target.value } })}
+                  className="rounded-xl border-gray-200 h-11"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Assigned Permissions</p>
+              <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto border border-gray-100 p-4 rounded-2xl bg-white/30">
+                {permissions.map((perm) => (
+                  <label key={perm} className="flex items-center space-x-3 text-sm font-medium text-gray-700 cursor-pointer hover:text-primary transition-colors">
+                    <Checkbox
+                      checked={editPermissions.includes(perm)}
+                      onCheckedChange={(checked) => {
+                        setEditPermissions((prev) =>
+                          checked ? [...prev, perm] : prev.filter((p) => p !== perm)
+                        );
+                      }}
+                      className="rounded-md border-gray-300"
+                    />
+                    <span>{perm}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="p-8 bg-gray-50/50 border-t border-gray-100 shrink-0">
+            <Button variant="ghost" onClick={() => setEditDialogOpen(false)} className="rounded-xl font-bold h-12 px-6">
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={savingEdit} className="gradient-primary text-white rounded-xl h-12 px-10 font-bold shadow-lg">
+              {savingEdit ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* OTP Verification */}
       <Dialog open={verifyDialog} onOpenChange={setVerifyDialog}>
@@ -470,6 +684,21 @@ const EA_ClusterHeads = () => {
                       <th className="px-6 py-4">Connectivity</th>
                       <th className="px-6 py-4">Organization</th>
                       <th className="px-6 py-4">Location</th>
+                      <th className="px-6 py-4">
+                        <Select
+                          value={statusFilter}
+                          onValueChange={(val) => setStatusFilter(val)}
+                        >
+                          <SelectTrigger className="h-8 border-none bg-transparent hover:bg-white/20 p-0 pr-2 font-extrabold text-[11px] text-gray-500 uppercase tracking-widest focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Status: All</SelectItem>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </th>
                       <th className="px-6 py-4 text-right">Management</th>
                     </tr>
                   </thead>
@@ -504,19 +733,33 @@ const EA_ClusterHeads = () => {
                             </span>
                           </div>
                         </td>
+                        <td className="px-6 py-5">
+                          <span className={cn(
+                            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                            c.status === "Inactive"
+                              ? "bg-gray-100 text-gray-800 border-gray-200"
+                              : "bg-[#e6f4ea] text-[#137333] border-[#ceead6]"
+                          )}>
+                            {c.status || "Active"}
+                          </span>
+                        </td>
                         <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary rounded-xl transition-all">
-                              <Edit className="h-5 w-5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(c._id)}
-                              className="hover:bg-destructive/10 hover:text-destructive rounded-xl transition-all"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </Button>
+                          <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                             {c.status !== "Inactive" && (
+                               <Button
+                                 variant="ghost"
+                                 size="icon"
+                                 onClick={() => handleEdit(c)}
+                                 className="hover:bg-primary/10 hover:text-primary rounded-xl transition-all"
+                               >
+                                 <Edit className="h-5 w-5" />
+                               </Button>
+                             )}
+                             <Switch
+                               checked={c.status !== "Inactive"}
+                               onCheckedChange={() => handleToggleStatus(c._id, c.status)}
+                               title={c.status === "Inactive" ? "Activate" : "Deactivate"}
+                             />
                           </div>
                         </td>
                       </tr>
@@ -527,6 +770,29 @@ const EA_ClusterHeads = () => {
             )}
           </CardContent>
         </Card>
+        {/* Confirm Status Change Dialog */}
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent className="glass-panel border-none shadow-2xl sm:max-w-[400px] rounded-[30px] p-8 text-center">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-[#2d3748]">Confirm Status Change</DialogTitle>
+              <p className="text-gray-500 mt-2 font-medium">
+                Are you sure you want to set this cluster head to{" "}
+                <span className="font-bold text-primary">
+                  {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+                </span>
+                ?
+              </p>
+            </DialogHeader>
+            <DialogFooter className="mt-6 flex justify-center gap-4">
+              <Button variant="ghost" onClick={() => setConfirmOpen(false)} className="rounded-xl font-bold px-6">
+                Cancel
+              </Button>
+              <Button onClick={executeToggleStatus} className="gradient-primary text-white rounded-xl px-8 font-bold shadow-lg">
+                Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

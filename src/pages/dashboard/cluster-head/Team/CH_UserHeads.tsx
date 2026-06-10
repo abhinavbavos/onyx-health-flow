@@ -12,10 +12,12 @@ import {
   createUserHead,
   deleteUserHead,
   verifyUserHead,
+  toggleUserHeadStatus,
 } from "@/services/userHead.service";
 import { getUserPermissions } from "@/services/permission.service";
 import { resendOtp } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+  SelectItem,
+} from "@/components/ui/select";
 
 /**
  * 👥 User Heads Management Page
@@ -130,18 +139,25 @@ const CH_UserHeads = () => {
   }, []);
 
   // Filter logic
-  const filteredHeads = useMemo(() => {
-    if (!searchTerm.trim()) return userHeads;
+  const [statusFilter, setStatusFilter] = useState("all");
 
-    return userHeads.filter((u) => {
+  const filteredHeads = useMemo(() => {
+    let list = userHeads;
+    if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
-      return (
-        u.name?.toLowerCase().includes(q) ||
-        u.phone_number?.join("").includes(q) ||
-        u.country?.toLowerCase().includes(q)
-      );
-    });
-  }, [searchTerm, userHeads]);
+      list = list.filter((u) => {
+        return (
+          u.name?.toLowerCase().includes(q) ||
+          u.phone_number?.join("").includes(q) ||
+          u.country?.toLowerCase().includes(q)
+        );
+      });
+    }
+    if (statusFilter !== "all") {
+      list = list.filter((u) => (u.status || "Active") === statusFilter);
+    }
+    return list;
+  }, [searchTerm, statusFilter, userHeads]);
 
   const handleAddUserHeadSubmit = async () => {
     const { name, phone_country, phone_number, password, country } = addForm;
@@ -196,15 +212,27 @@ const CH_UserHeads = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure?")) return;
+  // ───────────────────────── Toggle User Head Status ─────────────────────────
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{ id: string; currentStatus: string } | null>(null);
+
+  const handleToggleStatus = (id: string, currentStatus?: string) => {
+    setConfirmData({ id, currentStatus: currentStatus || "Active" });
+    setConfirmOpen(true);
+  };
+
+  const executeToggleStatus = async () => {
+    if (!confirmData) return;
+    const { id, currentStatus } = confirmData;
+    const newStatus = currentStatus === "Inactive" ? "Active" : "Inactive";
     try {
-      await deleteUserHead(id);
-      toast({ title: "Deleted successfully" });
+      await toggleUserHeadStatus(id, newStatus);
+      toast({ title: `User Head status updated to ${newStatus}` });
+      setConfirmOpen(false);
       fetchUserHeads();
     } catch (err: any) {
       toast({
-        title: "Delete failed",
+        title: "Toggle failed",
         description: err.message,
         variant: "destructive",
       });
@@ -413,7 +441,21 @@ const CH_UserHeads = () => {
                   <th className="text-left py-3 px-4 font-semibold">Name</th>
                   <th className="text-left py-3 px-4 font-semibold">Phone</th>
                   <th className="text-left py-3 px-4 font-semibold">Country</th>
-                  <th className="text-left py-3 px-4 font-semibold">Status</th>
+                  <th className="text-left py-3 px-4 font-semibold">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(val) => setStatusFilter(val)}
+                    >
+                      <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted p-0 pr-2 font-semibold text-sm text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 w-auto gap-1">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Status: All</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </th>
                   <th className="text-left py-3 px-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -442,13 +484,11 @@ const CH_UserHeads = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(u._id || u.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <Switch
+                        checked={u.status !== "Inactive"}
+                        onCheckedChange={() => handleToggleStatus(u._id || u.id || "", u.status)}
+                        title={u.status === "Inactive" ? "Activate" : "Deactivate"}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -457,6 +497,29 @@ const CH_UserHeads = () => {
           </div>
         )}
       </div>
+      {/* Confirm Status Change Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <p className="text-sm text-muted-foreground pt-2">
+              Are you sure you want to set this User Head to{" "}
+              <span className="font-bold text-primary">
+                {confirmData?.currentStatus === "Inactive" ? "Active" : "Inactive"}
+              </span>
+              ?
+            </p>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeToggleStatus}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

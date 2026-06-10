@@ -22,7 +22,11 @@ export interface VerifyResponse extends AuthResponse {
 export const userAuth = async (phone_number: string[]): Promise<AuthResponse> => {
   return apiRequest(API_ENDPOINTS.AUTH.USER_AUTH, {
     method: "POST",
-    data: { phone_number },
+    data: {
+      phone_number,
+      country: "India",
+      product_id: null,
+    },
     requiresAuth: false,
     withCredentials: true, // ✅ ensures any cookies are sent/stored properly
   });
@@ -30,19 +34,15 @@ export const userAuth = async (phone_number: string[]): Promise<AuthResponse> =>
 
 // Step 2: Verify OTP
 export const userAuthVerify = async ({
-  phone_number,
-  country,
   otp,
 }: {
-  phone_number: string[];
-  country: string;
   otp: string;
 }): Promise<VerifyResponse> => {
   const response = await apiRequest<VerifyResponse>(
     API_ENDPOINTS.AUTH.USER_AUTH_VERIFY,
     {
       method: "POST",
-      data: { phone_number, country, otp },
+      data: { otp },
       requiresAuth: false,
       withCredentials: true, // ✅ critical for CORS cookies
     }
