@@ -29,6 +29,7 @@ import UserHeadDashboard from "./pages/dashboard/user-head/UserHeadDashboard";
 import NurseDashboard from "./pages/dashboard/nurse/NurseDashboard";
 import UserDashboard from "./pages/dashboard/user/UserDashboard";
 import DoctorDashboard from "./pages/dashboard/doctor/DoctorDashboard";
+import TechnicianDashboard from "./pages/dashboard/technician/TechnicianDashboard";
 
 /* =======================
    Super Admin Pages
@@ -229,6 +230,17 @@ const App = () => (
               <Route path="devices" element={<EA_Devices />} />
               <Route path="reports" element={<EA_Reports />} />
               <Route path="organization" element={<Organization />} />
+            </Route>
+          </Route>
+
+          {/* =======================
+              TECHNICIAN ROUTES
+          ======================== */}
+          <Route element={<ProtectedRoute allowedRoles={["technician"]} />}>
+            <Route path="/dashboard/technician" element={<TechnicianDashboard />}>
+              <Route index element={<EA_Devices />} />
+              <Route path="devices" element={<EA_Devices />} />
+              <Route path="reports" element={<EA_Reports />} />
             </Route>
           </Route>
 

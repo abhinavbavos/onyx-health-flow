@@ -1,11 +1,16 @@
+import { Outlet, useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
 import { Shield, Users, FileText, Activity } from "lucide-react";
 
 const SuperAdminDashboard = () => {
+  const location = useLocation();
+  const isMainDashboard = location.pathname === "/dashboard/super-admin";
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      {isMainDashboard ? (
+        <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
           <p className="text-muted-foreground mt-1">System-wide overview and management</p>
@@ -88,11 +93,14 @@ const SuperAdminDashboard = () => {
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div className="h-full bg-primary" style={{ width: "75%" }} />
                 </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
+      </div>
+      ) : (
+        <Outlet />
+      )}
     </DashboardLayout>
   );
 };

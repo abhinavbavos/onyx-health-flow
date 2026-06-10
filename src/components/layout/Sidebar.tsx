@@ -15,6 +15,12 @@ import {
   HeartPulse,
   Stethoscope,
   Building2,
+  Calendar,
+  Video,
+  CreditCard,
+  Shield,
+  ShieldCheck,
+  Wrench,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -46,6 +52,28 @@ const Sidebar = () => {
 
   /* Role-based navigation */
   const NAV: Record<string, any[]> = {
+    "super-admin": [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard/super-admin",
+      },
+      {
+        label: "Roles",
+        icon: ShieldCheck,
+        path: "/dashboard/super-admin/roles",
+      },
+      {
+        label: "Users",
+        icon: Users,
+        path: "/dashboard/super-admin/users",
+      },
+      {
+        label: "Audit Logs",
+        icon: FileText,
+        path: "/dashboard/super-admin/audit",
+      },
+    ],
     "executive-admin": [
       {
         label: "Dashboard",
@@ -78,7 +106,7 @@ const Sidebar = () => {
       },
       {
         label: "Technicians",
-        icon: Settings, // or another appropriate icon
+        icon: Settings,
         path: "/dashboard/executive-admin/technicians",
       },
       {
@@ -147,6 +175,109 @@ const Sidebar = () => {
         path: "/dashboard/cluster-head/linked-accounts",
       },
     ],
+
+    "user-head": [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard/user-head",
+      },
+      {
+        label: "Nurses",
+        icon: HeartPulse,
+        path: "/dashboard/user-head/nurses",
+      },
+      {
+        label: "Devices",
+        icon: Settings,
+        path: "/dashboard/user-head/devices",
+      },
+      {
+        label: "Reports",
+        icon: FileText,
+        path: "/dashboard/user-head/reports",
+      },
+      {
+        label: "Organization",
+        icon: Building2,
+        path: "/dashboard/user-head/organization",
+      },
+    ],
+
+    "nurse": [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard/nurse",
+      },
+      {
+        label: "Devices",
+        icon: Settings,
+        path: "/dashboard/nurse/devices",
+      },
+      {
+        label: "Reports",
+        icon: FileText,
+        path: "/dashboard/nurse/reports",
+      },
+      {
+        label: "Organization",
+        icon: Building2,
+        path: "/dashboard/nurse/organization",
+      },
+    ],
+
+    "technician": [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard/technician",
+      },
+      {
+        label: "Devices",
+        icon: Settings,
+        path: "/dashboard/technician/devices",
+      },
+      {
+        label: "Reports",
+        icon: FileText,
+        path: "/dashboard/technician/reports",
+      },
+    ],
+
+    "doctor": [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard/doctor",
+      },
+      {
+        label: "Schedule",
+        icon: Calendar,
+        path: "/dashboard/doctor/schedule",
+      },
+      {
+        label: "Consultations",
+        icon: Video,
+        path: "/dashboard/doctor/consultations",
+      },
+      {
+        label: "Prescriptions",
+        icon: FileText,
+        path: "/dashboard/doctor/prescriptions",
+      },
+      {
+        label: "Reports",
+        icon: FileText,
+        path: "/dashboard/doctor/reports",
+      },
+      {
+        label: "Payments",
+        icon: CreditCard,
+        path: "/dashboard/doctor/payments",
+      },
+    ],
+
     "user": [
       {
         label: "Dashboard",

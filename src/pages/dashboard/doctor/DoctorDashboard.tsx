@@ -1,3 +1,4 @@
+import { Outlet, useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
 import { Calendar, Video, FileText, CreditCard } from "lucide-react";
@@ -6,9 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 const DoctorDashboard = () => {
+  const location = useLocation();
+  const isMainDashboard = location.pathname === "/dashboard/doctor";
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      {isMainDashboard ? (
+        <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Doctor Dashboard</h1>
@@ -138,6 +143,9 @@ const DoctorDashboard = () => {
           </div>
         </div>
       </div>
+      ) : (
+        <Outlet />
+      )}
     </DashboardLayout>
   );
 };
