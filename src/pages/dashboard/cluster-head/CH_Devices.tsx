@@ -10,7 +10,6 @@ type Device = {
   deviceCode?: string;
   modelNo?: string;
   status?: string;
-  lastActive?: string;
   location?: string;
   paymentMode: boolean;
 };
@@ -24,16 +23,25 @@ const CH_Devices = () => {
     setLoading(true);
     try {
       const devs = await listDevices();
-      const mapped = (devs || []).map((d: any) => ({
-        id: d?._id || d?.id,
-        name: d?.name || d?.deviceName,
-        deviceCode: d?.deviceCode,
-        modelNo: d?.modelNo,
-        status: d?.online ? "Online" : "Offline",
-        lastActive: d?.lastActive ? new Date(d.lastActive).toLocaleString() : "—",
-        location: d?.location || `${d?.city || ""} ${d?.country || ""}`.trim(),
-        paymentMode: d?.paymentMode ?? false,
-      }));
+      const mapped = (devs || []).map((d: any) => {
+        const formattedLocation = d?.location
+          ? typeof d.location === "string"
+            ? d.location
+            : `${d.location.line1 || ""}, ${d.location.line2 || ""}, ${d.location.line3 || ""}`
+                .replace(/^,\s*|,\s*$/g, "")
+                .trim()
+          : `${d?.city || ""} ${d?.country || ""}`.trim();
+
+        return {
+          id: d?._id || d?.id,
+          name: d?.name || d?.deviceName,
+          deviceCode: d?.deviceCode,
+          modelNo: d?.modelNo,
+          status: d?.status === "Active" || d?.online ? "Online" : "Offline",
+          location: formattedLocation || "—",
+          paymentMode: d?.paymentMode ?? false,
+        };
+      });
       setRows(mapped);
     } catch (err: any) {
       toast({
@@ -74,7 +82,6 @@ const CH_Devices = () => {
     { key: "deviceCode", header: "Code" },
     { key: "modelNo", header: "Model" },
     { key: "status", header: "Status" },
-    { key: "lastActive", header: "Last Active" },
     { key: "location", header: "Location" },
     {
       key: "paymentMode",
