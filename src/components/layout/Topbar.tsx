@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, ChevronDown, ShieldCheck, Globe2, Smartphone } from "lucide-react";
+import { ChevronDown, ShieldCheck, Globe2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -73,13 +73,7 @@ const Topbar = () => {
 
       {/* Right side – User Section */}
       <div className="flex items-center gap-4">
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-destructive text-white">
-            2
-          </Badge>
-        </Button>
+
 
         {/* User Info + Menu */}
         <DropdownMenu>

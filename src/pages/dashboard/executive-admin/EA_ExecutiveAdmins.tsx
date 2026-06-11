@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, Plus, Shield, Trash2 } from "lucide-react";
+import { Search, Shield, Trash2 } from "lucide-react";
 import { createExecAdmin, verifyExecAdmin, listExecutives, deleteExecAdmin, updateExecAdmin } from "@/services/executiveAdmin.service";
 import { Switch } from "@/components/ui/switch";
 
@@ -196,67 +196,7 @@ const EA_ExecutiveAdmins = () => {
           </p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gradient-primary text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Executive Admin
-            </Button>
-          </DialogTrigger>
 
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add Executive Admin</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <Input
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-              <div className="flex gap-2">
-                <Input
-                  className="w-20"
-                  placeholder="+91"
-                  value={formData.phone_country}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone_country: e.target.value })
-                  }
-                />
-                <Input
-                  placeholder="Phone Number"
-                  value={formData.phone_number}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone_number: e.target.value })
-                  }
-                />
-              </div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Country"
-                value={formData.country}
-                onChange={(e) =>
-                  setFormData({ ...formData, country: e.target.value })
-                }
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreate}>Submit</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* OTP Dialog */}

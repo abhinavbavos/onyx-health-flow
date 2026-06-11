@@ -128,6 +128,10 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  .gradient-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+  }
+
   .gradient-login-card {
     background: var(--gradient-login-card);
   }
