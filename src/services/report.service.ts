@@ -30,3 +30,13 @@ export const listReportsByUser = async (id: string) => {
   const res = await apiRequest(API_ENDPOINTS.REPORT.BY_USER(id), { method: "GET" });
   return res.reports || [];
 };
+
+export const listReportsByOrganization = async (orgId: string) => {
+  const res = await apiRequest(API_ENDPOINTS.REPORT.BY_ORGANIZATION(orgId), { method: "GET" });
+  return res.reports || [];
+};
+
+export const listReportsForClusterHead = async (id: string) => {
+  const res = await apiRequest(API_ENDPOINTS.REPORT.CLUSTER_HEAD(id), { method: "GET" });
+  return res.reports || [];
+};

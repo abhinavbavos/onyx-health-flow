@@ -5,6 +5,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import { Settings, FileText, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { viewOrganization } from "@/services/organization.service";
+import { listReportsByOrganization } from "@/services/report.service";
 
 const NurseDashboard = () => {
   const location = useLocation();
@@ -29,11 +30,15 @@ const NurseDashboard = () => {
       const orgId = localStorage.getItem("organizationId");
       if (!orgId) throw new Error("Organization ID missing");
 
-      const data = await viewOrganization(orgId);
-      const org = data.organization || data;
+      const [orgData, reportsData] = await Promise.all([
+        viewOrganization(orgId),
+        listReportsByOrganization(orgId)
+      ]);
+
+      const org = orgData.organization || orgData;
 
       const devices = org.devices || [];
-      const reports = org.reports || [];
+      const reports = reportsData || [];
 
       // Calculate dynamic stats
       const onlineDevices = devices.filter((d: any) => d.status === "Active" || d.online).length;

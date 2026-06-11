@@ -5,6 +5,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import { Users, FileText, Settings, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { viewOrganization } from "@/services/organization.service";
+import { listReportsByOrganization } from "@/services/report.service";
 
 const UserHeadDashboard = () => {
   const location = useLocation();
@@ -27,12 +28,16 @@ const UserHeadDashboard = () => {
       const orgId = localStorage.getItem("organizationId");
       if (!orgId) throw new Error("Organization ID missing");
 
-      const data = await viewOrganization(orgId);
-      const org = data.organization || data;
+      const [orgData, reportsData] = await Promise.all([
+        viewOrganization(orgId),
+        listReportsByOrganization(orgId)
+      ]);
+
+      const org = orgData.organization || orgData;
 
       const devices = org.devices || [];
       const nurses = org.nurse || [];
-      const reports = org.reports || [];
+      const reports = reportsData || [];
 
       setStats({
         nurses: nurses.length,

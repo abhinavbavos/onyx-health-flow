@@ -14,6 +14,7 @@ import {
 
 import { useToast } from "@/components/ui/use-toast";
 import { viewOrganization } from "@/services/organization.service";
+import { listReportsByOrganization } from "@/services/report.service";
 
 /* ------------------------------------------------------------------
   CLUSTER HEAD DASHBOARD — PREMIUM UI VERSION
@@ -64,13 +65,17 @@ const ClusterHeadDashboard = () => {
       const orgId = localStorage.getItem("organizationId");
       if (!orgId) throw new Error("Organization ID missing");
 
-      const data = await viewOrganization(orgId);
-      const org = data.organization || data;
+      const [orgData, reportsData] = await Promise.all([
+        viewOrganization(orgId),
+        listReportsByOrganization(orgId),
+      ]);
+
+      const org = orgData.organization || orgData;
 
       const devices = org.devices || [];
       const userHeads = org.userHead || [];
       const nurses = org.nurse || [];
-      const reports = org.reports || [];
+      const reports = reportsData || [];
 
       const loc = org.location
         ? `${org.location.line1 || ""}, ${org.location.line2 || ""}, ${
@@ -114,7 +119,7 @@ const ClusterHeadDashboard = () => {
             patient: r.profile?.name || "—",
             device: r.product?.deviceCode || "—",
             uploadedBy: r.uploadedBy?.name || "—",
-            createdAt: new Date(r.createdAt).toLocaleString(),
+            createdAt: r.createdAt ? new Date(r.createdAt).toLocaleString() : "—",
           }))
       );
     } catch (err: any) {

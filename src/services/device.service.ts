@@ -23,3 +23,9 @@ export const toggleDeviceStatus = (id: string, status: string) =>
       status,
     },
   });
+
+export const toggleDevicePaymentMode = (id: string, paymentMode: boolean) =>
+  apiRequest(`/api/product/payment-mode/${id}`, {
+    method: "PUT",
+    data: { paymentMode },
+  });

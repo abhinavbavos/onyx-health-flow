@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "@/components/layout/DashboardLayout";
 import SimpleTable from "@/components/dashboard/SimpleTable";
-import { listReports } from "@/services/report.service";
+import { listReportsByOrganization } from "@/services/report.service";
 
 type Row = {
   reportCode?: string;
@@ -19,16 +18,21 @@ const CH_Reports = () => {
   useEffect(() => {
     const run = async () => {
       try {
-        const data = await listReports(); // or getReportsByOrg(orgId)
+        const orgId = localStorage.getItem("organizationId");
+        if (!orgId) throw new Error("Organization ID missing");
+
+        const data = await listReportsByOrganization(orgId);
         const mapped = (data?.reports || data || []).map((r: any) => ({
           reportCode: r?.reportCode,
           profile: r?.profile?.name || r?.patientName,
           device: r?.product?.deviceCode || r?.deviceCode,
           uploadedBy: r?.uploadedBy?.name || r?.uploadedByName,
-          createdAt: new Date(r?.createdAt).toLocaleString(),
+          createdAt: r?.createdAt ? new Date(r.createdAt).toLocaleString() : "—",
           s3Link: r?.s3Link,
         }));
         setRows(mapped);
+      } catch (err) {
+        console.error("Failed to load organization reports", err);
       } finally {
         setLoading(false);
       }
