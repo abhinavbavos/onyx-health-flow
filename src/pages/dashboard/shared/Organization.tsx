@@ -1,4 +1,4 @@
-// import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageHeader from "@/components/dashboard/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ const Organization = () => {
   return (
     // <DashboardLayout>
     <div className="space-y-6">
+      <PageHeader />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Organization</h1>

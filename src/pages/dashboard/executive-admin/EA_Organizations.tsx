@@ -1,43 +1,28 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Search,
-  Plus,
-  Edit,
   MapPin,
   Building2,
-  Trash2,
-  Eye,
+  ArrowRight,
+  Cpu,
+  User,
+  Activity,
 } from "lucide-react";
-import {
-  listOrganizations,
-  createOrganization,
-  deleteOrganization,
-  viewOrganization,
-} from "@/services/organization.service";
-import { useNavigate } from "react-router-dom"; // ✅ import navigation
+import { listOrganizations } from "@/services/organization.service";
+import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/dashboard/PageHeader";
 
 const EA_Organizations = () => {
   const { toast } = useToast();
-  const navigate = useNavigate(); // ✅ initialize navigation hook
+  const navigate = useNavigate();
   const [orgs, setOrgs] = useState<any[]>([]);
   const [filteredOrgs, setFilteredOrgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState({ id: "", name: "", location: "" });
 
   useEffect(() => {
     const fetchOrgs = async () => {
@@ -69,170 +54,154 @@ const EA_Organizations = () => {
     else {
       setFilteredOrgs(
         orgs.filter((org) =>
-          org.organizationName.toLowerCase().includes(search.toLowerCase())
+          org.organizationName?.toLowerCase().includes(search.toLowerCase())
         )
       );
     }
   }, [search, orgs]);
 
-  const handleSubmit = async () => {
-    if (!formData.name || !formData.location) {
-      toast({ title: "Please fill all fields", variant: "destructive" });
-      return;
-    }
-
-    try {
-      if (editMode) {
-        toast({ title: "Edit functionality not yet implemented" });
-      } else {
-        const newOrg = await createOrganization(formData);
-        const normalizedNewOrg = {
-          ...newOrg,
-          id: newOrg._id || newOrg.id,
-        };
-        setOrgs((prev) => [...prev, normalizedNewOrg]);
-        toast({ title: "Organization created successfully" });
-      }
-
-      setDialogOpen(false);
-      setFormData({ id: "", name: "", location: "" });
-      setEditMode(false);
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Failed to save organization", variant: "destructive" });
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this organization?")) return;
-    try {
-      await deleteOrganization(id);
-      setOrgs((prev) => prev.filter((o) => o.id !== id));
-      toast({ title: "Organization deleted" });
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Failed to delete", variant: "destructive" });
-    }
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-center justify-between">
+      <PageHeader />
+
+      {/* Header and Actions Panel */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-3xl font-bold flex items-center gap-2 text-[#14213D]">
             <Building2 className="h-7 w-7 text-primary" /> Organizations
           </h1>
-          <p className="text-muted-foreground mt-1">
-            View healthcare organizations connected to your network
+          <p className="text-sm text-slate-400 font-semibold mt-1">
+            Manage healthcare facilities, cluster heads and connected hardware
           </p>
         </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="flex justify-end">
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        {/* Search */}
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Search organizations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10 rounded-[14px] border-slate-200 bg-white/60 focus-visible:ring-primary"
           />
         </div>
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Organizations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Loading organizations...
-            </div>
-          ) : filteredOrgs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No organizations found
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left py-3 px-4 font-semibold">Name</th>
-                    <th className="text-left py-3 px-4 font-semibold">Cluster Head</th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Location
-                    </th>
-                    <th className="text-left py-3 px-4 font-semibold">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrgs.map((org) => (
-                    <tr
-                      key={org.id}
-                      className="border-b hover:bg-muted/40 transition-colors cursor-pointer"
-                    >
-                      <td
-                        className="py-3 px-4 font-medium"
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/executive-admin/organizations/${org.id}`
-                          )
-                        }
-                      >
-                        {org.organizationName}
-                      </td>
-                      <td
-                        className="py-3 px-4 text-muted-foreground"
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/executive-admin/organizations/${org.id}`
-                          )
-                        }
-                      >
-                        {org.userId?.name || "N/A"}
-                      </td>
-                      <td
-                        className="py-3 px-4 text-muted-foreground"
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/executive-admin/organizations/${org.id}`
-                          )
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 shrink-0" />
-                          <span>{`${org.location?.line1 || ""}, ${org.location?.line2 || ""}`}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(
-                                `/dashboard/executive-admin/organizations/${org.id}`
-                              );
-                            }}
-                          >
-                            <Eye className="h-4 w-4 text-primary" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Grid of Cards */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="border-none bg-white/60 backdrop-blur-md rounded-[24px] shadow-sm p-6 animate-pulse">
+              <div className="flex justify-between items-start mb-4">
+                <div className="h-12 w-12 rounded-[16px] bg-slate-100 skeleton-block" />
+                <div className="h-5 w-16 rounded-full bg-slate-100 skeleton-block" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-3/4 rounded bg-slate-100 skeleton-block" />
+                <div className="h-3 w-1/2 rounded bg-slate-100 skeleton-block" />
+              </div>
+              <div className="h-px bg-slate-100 my-4" />
+              <div className="space-y-2">
+                <div className="h-3 w-2/3 rounded bg-slate-100 skeleton-block" />
+                <div className="h-3 w-1/2 rounded bg-slate-100 skeleton-block" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : filteredOrgs.length === 0 ? (
+        <Card className="border-none bg-white/60 backdrop-blur-md rounded-[24px] shadow-sm p-12 text-center">
+          <Building2 className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500 font-bold text-base">No organizations found</p>
+          <p className="text-xs text-slate-400 mt-1">Try refining your search keyword.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredOrgs.map((org) => {
+            const firstLetter = org.organizationName?.[0] || "O";
+            const isActive = org.status === "Active";
+            return (
+              <Card
+                key={org.id}
+                onClick={() => navigate(`/dashboard/executive-admin/organizations/${org.id}`)}
+                className="group hover-lift border-none bg-white/60 backdrop-blur-md rounded-[24px] shadow-sm p-6 cursor-pointer relative overflow-hidden transition-all duration-300 hover:bg-white"
+              >
+                {/* Accent Blob */}
+                <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-[0.03] blur-xl group-hover:scale-125 transition-all duration-500" style={{ background: isActive ? "#10B981" : "#F2052C" }} />
+                
+                {/* Card Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="h-12 w-12 rounded-[16px] bg-gradient-to-br from-[#14213D] to-[#1e3a5f] text-white flex items-center justify-center font-extrabold text-base shadow-sm shrink-0">
+                    {firstLetter}
+                  </div>
+                  
+                  {/* Status Badge */}
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border shrink-0 ${
+                      isActive
+                        ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                        : "bg-rose-50 text-rose-500 border-rose-100"
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-500 animate-pulse" : "bg-rose-400"}`} />
+                    {org.status || "Active"}
+                  </span>
+                </div>
+
+                {/* Facility Info */}
+                <div className="mb-4">
+                  <h3 className="text-base font-extrabold text-[#14213D] group-hover:text-primary transition-colors leading-tight mb-1 truncate">
+                    {org.organizationName}
+                  </h3>
+                  <p className="text-[10px] font-extrabold text-[#35B7C9] uppercase tracking-widest leading-none">
+                    {org.organizationCode || "ORG-CODE"}
+                  </p>
+                </div>
+
+                <div className="h-px bg-slate-100 my-4" />
+
+                {/* Details Section */}
+                <div className="space-y-3 text-xs text-slate-500 font-semibold mb-4">
+                  {/* Cluster Head */}
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-slate-400 shrink-0" />
+                    <span className="truncate">
+                      Cluster Head: <strong className="text-[#14213D]">{org.userId?.name || "None Assigned"}</strong>
+                    </span>
+                  </div>
+
+                  {/* Location */}
+                  {org.location && (org.location.line1 || org.location.line2) && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                      <span className="truncate">
+                        {org.location.line1 || ""}{org.location.line2 ? `, ${org.location.line2}` : ""}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Devices Count */}
+                  <div className="flex items-center gap-2">
+                    <Cpu className="h-4 w-4 text-slate-400 shrink-0" />
+                    <span>
+                      Devices connected: <strong className="text-[#35B7C9]">{org.devices?.length || 0}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer Link Overlay Trigger */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100/50 mt-2">
+                  <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider group-hover:text-primary transition-colors">
+                    View facility setup
+                  </span>
+                  <div className="h-7 w-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

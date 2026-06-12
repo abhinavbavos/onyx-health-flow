@@ -1,150 +1,194 @@
 import { Outlet, useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
-import { Calendar, Video, FileText, CreditCard } from "lucide-react";
+import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
+import QuickActions from "@/components/dashboard/QuickActions";
+import PageHeader from "@/components/dashboard/PageHeader";
+import { Calendar, Video, FileText, CreditCard, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+const APPOINTMENTS = [
+  { patient: "John Doe", time: "09:00 AM", type: "Video Call", status: "Upcoming" },
+  { patient: "Jane Smith", time: "10:30 AM", type: "Video Call", status: "In Progress" },
+  { patient: "Bob Johnson", time: "11:45 AM", type: "Follow-up", status: "Upcoming" },
+  { patient: "Alice Williams", time: "02:00 PM", type: "Video Call", status: "Upcoming" },
+  { patient: "Charlie Brown", time: "03:30 PM", type: "Consultation", status: "Completed" },
+];
+
+const PRESCRIPTIONS = [
+  { patient: "John Doe", medication: "Amoxicillin 500mg", date: "Jun 12, 2026", icon: "J" },
+  { patient: "Jane Smith", medication: "Lisinopril 10mg", date: "Jun 11, 2026", icon: "J" },
+  { patient: "Bob Johnson", medication: "Metformin 850mg", date: "Jun 10, 2026", icon: "B" },
+];
+
+const REPORTS = [
+  { patient: "Alice Williams", report: "Blood Test Results", status: "Pending Review" },
+  { patient: "Charlie Brown", report: "ECG Report", status: "Reviewed" },
+  { patient: "David Lee", report: "X-Ray Scan", status: "Pending Review" },
+];
+
+const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
+  "Upcoming": { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
+  "In Progress": { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-100" },
+  "Completed": { bg: "bg-slate-100", text: "text-slate-500", border: "border-slate-200" },
+};
+
 const DoctorDashboard = () => {
   const location = useLocation();
   const isMainDashboard = location.pathname === "/dashboard/doctor";
+  const userName = localStorage.getItem("userName") || "";
 
   return (
     <DashboardLayout>
       {isMainDashboard ? (
-        <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Doctor Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Manage your consultations and patients</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Label htmlFor="availability">Available for Consultations</Label>
-            <Switch id="availability" defaultChecked />
-          </div>
-        </div>
+        <div className="space-y-6 animate-fadeIn">
+          <PageHeader />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Today's Appointments"
-            value="8"
-            icon={Calendar}
-            variant="primary"
-          />
-          <StatCard
-            title="Pending Consultations"
-            value="3"
-            icon={Video}
-            variant="secondary"
-          />
-          <StatCard
-            title="Reports to Review"
-            value="12"
-            icon={FileText}
-            variant="warning"
-          />
-          <StatCard
-            title="This Month Earnings"
-            value="$12,450"
-            icon={CreditCard}
-            variant="success"
-          />
-        </div>
+          <WelcomeBanner name={userName} role="doctor" />
 
-        <div className="bg-card rounded-lg shadow-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold">Today's Schedule</h3>
-            <Button className="gradient-primary">
-              <Video className="h-4 w-4 mr-2" />
-              Quick Consult
-            </Button>
+          {/* Header row with availability toggle */}
+          <div className="flex items-center justify-between">
+            <QuickActions role="doctor" />
+            <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md border border-white/60 rounded-full px-4 py-2.5 shadow-sm">
+              <Label htmlFor="availability" className="text-xs font-bold text-[#14213D] cursor-pointer">
+                Available for Consult
+              </Label>
+              <Switch id="availability" defaultChecked />
+            </div>
           </div>
-          <div className="space-y-3">
-            {[
-              { patient: "John Doe", time: "09:00 AM", type: "Video Call", status: "Upcoming" },
-              { patient: "Jane Smith", time: "10:30 AM", type: "Video Call", status: "In Progress" },
-              { patient: "Bob Johnson", time: "11:45 AM", type: "Follow-up", status: "Upcoming" },
-              { patient: "Alice Williams", time: "02:00 PM", type: "Video Call", status: "Upcoming" },
-              { patient: "Charlie Brown", time: "03:30 PM", type: "Consultation", status: "Upcoming" },
-            ].map((appointment, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-white font-semibold">
-                    {appointment.patient.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div>
-                    <p className="font-medium">{appointment.patient}</p>
-                    <p className="text-sm text-muted-foreground">{appointment.type}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-primary">{appointment.time}</span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    appointment.status === "In Progress" 
-                      ? "bg-success/10 text-success" 
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {appointment.status}
-                  </span>
-                  {appointment.status === "In Progress" && (
-                    <Button size="sm" className="gradient-primary">
-                      <Video className="h-4 w-4 mr-1" />
-                      Join
-                    </Button>
-                  )}
-                </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <StatCard title="Today's Appointments" value={8} icon={Calendar} variant="primary" />
+            <StatCard title="Pending Consultations" value={3} icon={Video} variant="secondary" />
+            <StatCard title="Reports to Review" value={12} icon={FileText} variant="warning" />
+            <StatCard title="This Month Earnings" value="$12,450" icon={CreditCard} variant="success" />
+          </div>
+
+          {/* Today's Schedule */}
+          <div className="bg-white/60 backdrop-blur-md rounded-[24px] border border-white/60 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-[#F2052C]" />
+                <h3 className="text-base font-extrabold text-[#14213D]">Today's Schedule</h3>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-card rounded-lg shadow-card p-6">
-            <h3 className="text-xl font-semibold mb-4">Recent Prescriptions</h3>
-            <div className="space-y-3">
-              {[
-                { patient: "John Doe", medication: "Amoxicillin 500mg", date: "Jan 15, 2025" },
-                { patient: "Jane Smith", medication: "Lisinopril 10mg", date: "Jan 14, 2025" },
-                { patient: "Bob Johnson", medication: "Metformin 850mg", date: "Jan 13, 2025" },
-              ].map((prescription, i) => (
-                <div key={i} className="p-3 rounded-lg bg-muted/50">
-                  <p className="font-medium">{prescription.patient}</p>
-                  <p className="text-sm text-muted-foreground">{prescription.medication}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{prescription.date}</p>
-                </div>
-              ))}
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-[#F2052C] to-[#FF4B66] text-white border-none rounded-[14px] shadow-md shadow-[#F2052C]/20 hover:opacity-90 h-8"
+              >
+                <Video className="h-3.5 w-3.5 mr-1.5" />
+                Quick Consult
+              </Button>
             </div>
-          </div>
-
-          <div className="bg-card rounded-lg shadow-card p-6">
-            <h3 className="text-xl font-semibold mb-4">Patient Reports</h3>
             <div className="space-y-3">
-              {[
-                { patient: "Alice Williams", report: "Blood Test Results", status: "Pending Review" },
-                { patient: "Charlie Brown", report: "ECG Report", status: "Reviewed" },
-                { patient: "David Lee", report: "X-Ray Scan", status: "Pending Review" },
-              ].map((report, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
-                  <div>
-                    <p className="font-medium">{report.patient}</p>
-                    <p className="text-sm text-muted-foreground">{report.report}</p>
+              {APPOINTMENTS.map((apt, i) => {
+                const sc = statusConfig[apt.status] || statusConfig["Upcoming"];
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-4 rounded-[18px] bg-slate-50/60 hover:bg-white/80 transition-all"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#F2052C] to-[#35B7C9] flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
+                        {apt.patient.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#14213D]">{apt.patient}</p>
+                        <p className="text-xs text-slate-400 font-semibold">{apt.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-extrabold text-[#F2052C]">{apt.time}</span>
+                      <span
+                        className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${sc.bg} ${sc.text} ${sc.border}`}
+                      >
+                        {apt.status}
+                      </span>
+                      {apt.status === "In Progress" && (
+                        <Button
+                          size="sm"
+                          className="bg-gradient-to-r from-[#F2052C] to-[#FF4B66] text-white rounded-[12px] h-7 text-xs font-bold border-none shadow-sm"
+                        >
+                          <Video className="h-3 w-3 mr-1" /> Join
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    report.status === "Reviewed" 
-                      ? "bg-success/10 text-success" 
-                      : "bg-warning/10 text-warning"
-                  }`}>
-                    {report.status}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Prescriptions + Reports */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Recent Prescriptions */}
+            <div className="bg-white/60 backdrop-blur-md rounded-[24px] border border-white/60 shadow-sm p-6">
+              <h3 className="text-base font-extrabold text-[#14213D] mb-5">Recent Prescriptions</h3>
+              <div className="space-y-3">
+                {PRESCRIPTIONS.map((rx, i) => (
+                  <div key={i} className="flex items-center gap-4 p-3 rounded-[16px] bg-slate-50/60 hover:bg-white/80 transition-all">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#14213D] to-[#1e2d4a] flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
+                      {rx.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-[#14213D] truncate">{rx.patient}</p>
+                      <p className="text-xs text-slate-400 font-semibold">{rx.medication}</p>
+                    </div>
+                    <p className="text-[10px] text-slate-300 font-bold shrink-0">{rx.date}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Patient Reports */}
+            <div className="bg-white/60 backdrop-blur-md rounded-[24px] border border-white/60 shadow-sm p-6">
+              <h3 className="text-base font-extrabold text-[#14213D] mb-5">Patient Reports</h3>
+              <div className="space-y-3">
+                {REPORTS.map((rpt, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-3 rounded-[16px] bg-slate-50/60 hover:bg-white/80 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-9 w-9 rounded-[12px] flex items-center justify-center shrink-0 ${
+                          rpt.status === "Reviewed"
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-amber-50 text-amber-600"
+                        }`}
+                      >
+                        {rpt.status === "Reviewed" ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#14213D]">{rpt.patient}</p>
+                        <p className="text-xs text-slate-400 font-semibold">{rpt.report}</p>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border shrink-0 ${
+                        rpt.status === "Reviewed"
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                          : "bg-amber-50 text-amber-600 border-amber-100"
+                      }`}
+                    >
+                      {rpt.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
       ) : (
-        <Outlet />
+        <div className="mt-2">
+          <Outlet />
+        </div>
       )}
     </DashboardLayout>
   );
