@@ -21,6 +21,7 @@ import { apiRequest } from "@/lib/api-request";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 
+import PageHeader from "@/components/dashboard/PageHeader";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -77,10 +78,43 @@ const CH_Nurses = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addStep, setAddStep] = useState<"form" | "verify">("form");
   const [addOtp, setAddOtp] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
   const [pendingNursePhone, setPendingNursePhone] = useState<{
     phone_country: string;
     phone_number: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const t = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(t);
+    }
+  }, [resendTimer]);
+
+  const handleResendOtp = async () => {
+    const { name, phone_country, phone_number, password, country, devices } = addForm;
+    if (!phone_number) return;
+    try {
+      const payload = {
+        phone_number: [phone_country, phone_number],
+        password,
+        name,
+        country,
+        orgId: localStorage.getItem("organizationId") || "",
+        permissions: selectedPermissionsNew,
+        devices,
+      };
+      await createNurse(payload);
+      setResendTimer(30);
+      toast({ title: "OTP resent successfully" });
+    } catch (err: any) {
+      toast({
+        title: "Failed to resend OTP",
+        description: err.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const [addForm, setAddForm] = useState({
     name: "",
@@ -280,8 +314,9 @@ const CH_Nurses = () => {
       : ["91", ""];
 
     // Pre-fill edit form fields
-    const currentDevices: string[] = Array.isArray(nurse.devices)
-      ? nurse.devices.map((d: any) => (typeof d === "string" ? d : d._id))
+    const nurseDevices = nurse.assignedDevices || nurse.devices || [];
+    const currentDevices: string[] = Array.isArray(nurseDevices)
+      ? nurseDevices.map((d: any) => (typeof d === "string" ? d : d._id))
       : [];
 
     setEditForm({
@@ -373,6 +408,7 @@ const CH_Nurses = () => {
   // ───────────────────────── Render ─────────────────────────
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <PageHeader />
       {/* Header + Add Button */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
@@ -697,20 +733,29 @@ const CH_Nurses = () => {
                         : "—"}
                     </td>
                     <td className="py-3 px-4">
-                      {n.devices && n.devices.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {n.devices.map((d: any) => (
-                            <span
-                              key={d._id}
-                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                            >
-                              {d.name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
+                      {(() => {
+                        const nurseDevices = n.assignedDevices || n.devices || [];
+                        return nurseDevices && nurseDevices.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {nurseDevices.map((d: any, idx: number) => {
+                              const details = typeof d === "string"
+                                ? orgDevices.find((od) => od._id === d) || { _id: d, name: d }
+                                : d;
+                              return (
+                                <span
+                                  key={details?._id || idx}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                                  title={details?.deviceCode || ""}
+                                >
+                                  {details?.name || "Unknown"}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 px-4">
                       <span

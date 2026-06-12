@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
-import { Users, FileText, Settings, Loader2 } from "lucide-react";
+import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
+import QuickActions from "@/components/dashboard/QuickActions";
+import PageHeader from "@/components/dashboard/PageHeader";
+import EmptyState from "@/components/dashboard/EmptyState";
+import { SkeletonStatGrid, SkeletonTable } from "@/components/dashboard/Skeletons";
+import { Users, FileText, Settings, Loader2, HeartPulse, Phone } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { viewOrganization } from "@/services/organization.service";
 import { listReportsByOrganization } from "@/services/report.service";
@@ -10,17 +15,13 @@ import { listReportsByOrganization } from "@/services/report.service";
 const UserHeadDashboard = () => {
   const location = useLocation();
   const { toast } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    nurses: 0,
-    devices: 0,
-    reports: 0,
-  });
-  
+  const [stats, setStats] = useState({ nurses: 0, devices: 0, reports: 0 });
   const [nursesList, setNursesList] = useState<any[]>([]);
-  
+
   const isMainDashboard = location.pathname === "/dashboard/user-head";
+  const userName = localStorage.getItem("userName") || "";
 
   const fetchOrgData = async () => {
     setLoading(true);
@@ -30,122 +31,104 @@ const UserHeadDashboard = () => {
 
       const [orgData, reportsData] = await Promise.all([
         viewOrganization(orgId),
-        listReportsByOrganization(orgId)
+        listReportsByOrganization(orgId),
       ]);
 
       const org = orgData.organization || orgData;
-
       const devices = org.devices || [];
       const nurses = org.nurse || [];
       const reports = reportsData || [];
 
-      setStats({
-        nurses: nurses.length,
-        devices: devices.length,
-        reports: reports.length,
-      });
-
+      setStats({ nurses: nurses.length, devices: devices.length, reports: reports.length });
       setNursesList(nurses);
     } catch (err: any) {
-      toast({
-        title: "Failed to load dashboard data",
-        description: err.message,
-        variant: "destructive",
-      });
+      toast({ title: "Failed to load dashboard data", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchOrgData();
-  }, []);
+  useEffect(() => { fetchOrgData(); }, []);
 
   return (
     <DashboardLayout>
       {isMainDashboard ? (
         <div className="space-y-6 animate-fadeIn">
-          <div>
-            <h1 className="text-3xl font-bold">User Head Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Nurse and device management</p>
-          </div>
+          <PageHeader />
 
-          {!loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatCard
-                title="Active Nurses"
-                value={stats.nurses.toString()}
-                icon={Users}
-                variant="primary"
-              />
-              <StatCard
-                title="Connected Devices"
-                value={stats.devices.toString()}
-                icon={Settings}
-                variant="success"
-              />
-              <StatCard
-                title="Total Reports"
-                value={stats.reports.toString()}
-                icon={FileText}
-                variant="secondary"
-              />
+          <WelcomeBanner name={userName} role="user-head" />
+
+          <QuickActions role="user-head" />
+
+          {/* Stats */}
+          {loading ? (
+            <SkeletonStatGrid count={3} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <StatCard title="Active Nurses" value={stats.nurses} icon={HeartPulse} variant="primary" />
+              <StatCard title="Connected Devices" value={stats.devices} icon={Settings} variant="success" />
+              <StatCard title="Total Reports" value={stats.reports} icon={FileText} variant="secondary" />
             </div>
           )}
 
-          <div className="bg-card rounded-lg shadow-card p-6">
-            <h3 className="text-xl font-semibold mb-4">Nurses Overview</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-semibold">Nurse</th>
-                    <th className="text-left py-3 px-4 font-semibold">Phone Number</th>
-                    <th className="text-left py-3 px-4 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={3} className="py-6 text-center text-muted-foreground">
-                        <div className="flex justify-center items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                          Loading nurses...
-                        </div>
-                      </td>
-                    </tr>
-                  ) : nursesList.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="py-6 text-center text-muted-foreground">
-                        No nurses found
-                      </td>
-                    </tr>
-                  ) : (
-                    nursesList.map((nurse, i) => (
-                      <tr key={i} className="border-b hover:bg-muted/50 transition-colors">
-                        <td className="py-3 px-4 font-medium">{nurse.name}</td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          {nurse.phone_number ? `+${nurse.phone_number.join(" ")}` : "—"}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            nurse.status === "Active" 
-                              ? "bg-emerald-100 text-emerald-700" 
-                              : "bg-rose-100 text-rose-700"
-                          }`}>
-                            {nurse.status || "Unknown"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+          {/* Nurses Table */}
+          <div className="bg-white/60 backdrop-blur-md rounded-[24px] border border-white/60 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-extrabold text-[#14213D]">Nurses Overview</h3>
+              <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                {nursesList.length} nurses
+              </span>
             </div>
+
+            {loading ? (
+              <SkeletonTable rows={5} />
+            ) : nursesList.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="No nurses found"
+                description="Nurses assigned to this organization will appear here."
+              />
+            ) : (
+              <div className="space-y-3">
+                {nursesList.map((nurse, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 p-3 rounded-[16px] bg-slate-50/60 hover:bg-white/80 transition-all cursor-pointer group"
+                  >
+                    {/* Avatar */}
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#F2052C] to-[#35B7C9] flex items-center justify-center text-white font-extrabold text-sm uppercase shrink-0 shadow-sm">
+                      {(nurse.name || "N")[0]}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-[#14213D] truncate">{nurse.name}</p>
+                      {nurse.phone_number && (
+                        <p className="text-xs text-slate-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <Phone className="h-3 w-3" />
+                          +{nurse.phone_number.join(" ")}
+                        </p>
+                      )}
+                    </div>
+                    {/* Status */}
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shrink-0 ${
+                        nurse.status === "Active"
+                          ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                          : "bg-rose-50 text-rose-500 border border-rose-100"
+                      }`}
+                    >
+                      {nurse.status || "Unknown"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        <Outlet />
+        <div className="mt-2">
+          <Outlet />
+        </div>
       )}
     </DashboardLayout>
   );

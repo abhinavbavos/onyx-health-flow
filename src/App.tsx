@@ -27,7 +27,6 @@ import ExecutiveAdminDashboard from "./pages/dashboard/executive-admin/Executive
 import ClusterHeadDashboard from "./pages/dashboard/cluster-head/ClusterHeadDashboard";
 import UserHeadDashboard from "./pages/dashboard/user-head/UserHeadDashboard";
 import NurseDashboard from "./pages/dashboard/nurse/NurseDashboard";
-import UserDashboard from "./pages/dashboard/user/UserDashboard";
 import DoctorDashboard from "./pages/dashboard/doctor/DoctorDashboard";
 import TechnicianDashboard from "./pages/dashboard/technician/TechnicianDashboard";
 
@@ -72,12 +71,6 @@ import CH_LinkedAccounts from "./pages/dashboard/cluster-head/CH_LinkedAccounts"
 import Payments from "./pages/dashboard/shared/Payments";
 import Organization from "./pages/dashboard/shared/Organization";
 
-/* =======================
-   User pages
-======================= */
-import Sessions from "./pages/dashboard/user/Sessions";
-import Consultancy from "./pages/dashboard/user/Consultancy";
-import Profile from "./pages/dashboard/user/Profile";
 
 /* =======================
    Doctor pages
@@ -244,19 +237,6 @@ const App = () => (
             </Route>
           </Route>
 
-          {/* =======================
-              USER ROUTES
-          ======================== */}
-          <Route element={<ProtectedRoute allowedRoles={["user"]} />}>
-            <Route path="/dashboard/user" element={<UserDashboard />}>
-              <Route index element={<Profile />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="reports" element={<EA_Reports />} />
-              <Route path="sessions" element={<Sessions />} />
-              <Route path="consultancy" element={<Consultancy />} />
-              <Route path="payments" element={<Payments />} />
-            </Route>
-          </Route>
 
           {/* =======================
               DOCTOR ROUTES
