@@ -1,7 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
-// export const API_BASE_URL = 'https://lia-unmilked-jagger.ngrok-free.dev';
-// export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://13.203.86.159';
-// export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.onyxhealthplus.com';
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
