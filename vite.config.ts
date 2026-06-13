@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     proxy: {
       '^/(api|create|get|view|update|delete|list|add|validate|onboard|report|sessions|session-items)': {
-        target: 'https://lia-unmilked-jagger.ngrok-free.dev',
+        target: 'https://api.onyxhealthplus.com',
         changeOrigin: true,
         secure: false,
         cookieDomainRewrite: "localhost",
