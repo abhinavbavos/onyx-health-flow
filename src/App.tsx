@@ -144,6 +144,7 @@ const App = () => (
             <Route path="/dashboard/super-admin" element={<SuperAdminDashboard />}>
               <Route index element={<RoleManagement />} />
               <Route path="roles" element={<RoleManagement />} />
+              <Route path="executives" element={<EA_ExecutiveAdmins />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="audit" element={<AuditLogs />} />
             </Route>
