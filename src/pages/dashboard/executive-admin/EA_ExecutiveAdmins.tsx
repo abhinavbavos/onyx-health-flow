@@ -23,12 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, Shield, Trash2 } from "lucide-react";
-import { createExecAdmin, verifyExecAdmin, listExecutives, deleteExecAdmin, updateExecAdmin } from "@/services/executiveAdmin.service";
+import { Search, Shield } from "lucide-react";
+import { createExecAdmin, verifyExecAdmin, listExecutives, updateExecAdmin } from "@/services/executiveAdmin.service";
 import { Switch } from "@/components/ui/switch";
 
 const EA_ExecutiveAdmins = () => {
   const { toast } = useToast();
+  const userRole = (localStorage.getItem("userRole") || "").replace(/_/g, "-");
   const [executives, setExecutives] = useState<any[]>([]);
   const [filteredExecutives, setFilteredExecutives] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -196,7 +197,84 @@ const EA_ExecutiveAdmins = () => {
           </p>
         </div>
 
-
+        {userRole === "super-admin" && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-[#F2052C] to-[#FF4B66] text-white rounded-[14px] border-none shadow-md shadow-[#F2052C]/20 hover:opacity-90">
+                Add Executive Admin
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[450px] rounded-[24px]">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-extrabold text-[#14213D] flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-[#F2052C]" />
+                  Add Executive Admin
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                <div>
+                  <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5 block">Full Name</label>
+                  <Input
+                    placeholder="e.g. Rohan Mehta"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="rounded-[14px] border-slate-200 h-10"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5 block">Country Code</label>
+                    <Input
+                      placeholder="91"
+                      value={formData.phone_country}
+                      onChange={(e) => setFormData({ ...formData, phone_country: e.target.value })}
+                      className="rounded-[14px] border-slate-200 h-10"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5 block">Phone Number</label>
+                    <Input
+                      placeholder="9876543210"
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      className="rounded-[14px] border-slate-200 h-10"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5 block">Password</label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="rounded-[14px] border-slate-200 h-10"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1.5 block">Country</label>
+                  <Input
+                    placeholder="India"
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    className="rounded-[14px] border-slate-200 h-10"
+                  />
+                </div>
+              </div>
+              <DialogFooter className="mt-4 flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setDialogOpen(false)} className="rounded-[14px]">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreate}
+                  className="bg-gradient-to-r from-[#F2052C] to-[#FF4B66] text-white rounded-[14px] border-none shadow-md shadow-[#F2052C]/20 hover:opacity-90"
+                >
+                  Create
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* OTP Dialog */}

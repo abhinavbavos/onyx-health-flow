@@ -43,6 +43,11 @@ const NAV: Record<string, any[]> = {
         path: "/dashboard/super-admin/roles",
       },
       {
+        label: "Executive Admins",
+        icon: ShieldCheck,
+        path: "/dashboard/super-admin/executives",
+      },
+      {
         label: "Users",
         icon: Users,
         path: "/dashboard/super-admin/users",
